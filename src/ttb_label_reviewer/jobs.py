@@ -14,6 +14,7 @@ stays UI-agnostic and the templates stay owned by main.py.
 """
 
 import asyncio
+import contextlib
 import logging
 import secrets
 import time
@@ -54,6 +55,7 @@ class BatchRenderer(Protocol):
     def review_row(self, result) -> str: ...
     def error_row(self, error: RowError) -> str: ...
     def counts(self, job: "BatchJob", done: bool) -> str: ...
+    def failure(self, job: "BatchJob") -> str: ...
 
 
 class BatchJob:
@@ -126,6 +128,13 @@ async def run_batch(
     Row order in the stream is completion order; the UI's grouped table
     (fail > needs_review > pass, errors on top) does the sorting, so
     nothing here waits on anything else.
+
+    Failure containment, in layers: anything that goes wrong inside one
+    row — extraction, review, even rendering that row's fragment — costs
+    that row, never the batch (contracts.md §2). Anything that escapes a
+    row is caught at the top so the stream still terminates: an SSE
+    consumer blocks until "done" arrives, and a runner that died without
+    sending it would leave the browser spinning forever.
     """
 
     async def emit_error(error: RowError) -> None:
@@ -133,46 +142,51 @@ async def run_batch(
         await job.emit("row-error", render.error_row(error))
         await job.emit("counts", render.counts(job, done=False))
 
-    # Manifest-level row errors are known before any extraction starts;
-    # surfacing them first gets fixable rows back to the user immediately.
-    for error in parsed.errors:
-        await emit_error(error)
-
     semaphore = asyncio.Semaphore(EXTRACTION_CONCURRENCY)
 
     async def review_one(row: BatchRow) -> None:
-        async with semaphore:
-            try:
+        try:
+            async with semaphore:
                 # The extractor is synchronous (one blocking API call);
                 # a thread per in-flight row keeps the event loop free
                 # to stream results while reviews run.
                 result = await asyncio.to_thread(
                     review_label_set, row.application, row.images, extractor
                 )
-            except ExtractionError as exc:
-                await emit_error(
-                    RowError(row.row_number, row.application.application_id, str(exc))
+            html = render.review_row(result)
+        except ExtractionError as exc:
+            await emit_error(
+                RowError(row.row_number, row.application.application_id, str(exc))
+            )
+            return
+        except Exception:
+            logger.exception("unexpected error reviewing batch row %s", row.row_number)
+            await emit_error(
+                RowError(
+                    row.row_number,
+                    row.application.application_id,
+                    "Internal error while reviewing this row.",
                 )
-                return
-            except Exception:
-                # A bug must cost one row, never the batch (contracts.md §2).
-                logger.exception(
-                    "unexpected error reviewing batch row %s", row.row_number
-                )
-                await emit_error(
-                    RowError(
-                        row.row_number,
-                        row.application.application_id,
-                        "Internal error while reviewing this row.",
-                    )
-                )
-                return
+            )
+            return
         job.counts[result.verdict.value] += 1
-        await job.emit(f"row-{result.verdict.value}", render.review_row(result))
+        await job.emit(f"row-{result.verdict.value}", html)
         await job.emit("counts", render.counts(job, done=False))
 
-    await asyncio.gather(*(review_one(row) for row in parsed.rows))
-    await job.emit("counts", render.counts(job, done=True))
-    # Terminal event: closes every open stream, and sse-close="done"
-    # stops the browser's EventSource from reconnecting.
-    await job.emit("done", "done")
+    try:
+        # Manifest-level row errors are known before any extraction
+        # starts; surfacing them first gets fixable rows back to the
+        # user immediately.
+        for error in parsed.errors:
+            await emit_error(error)
+        await asyncio.gather(*(review_one(row) for row in parsed.rows))
+        await job.emit("counts", render.counts(job, done=True))
+    except Exception:
+        logger.exception("batch %s runner failed", job.job_id)
+        with contextlib.suppress(Exception):
+            await job.emit("counts", render.failure(job))
+    finally:
+        # Terminal event, unconditionally: closes every open stream, and
+        # sse-close="done" stops the browser's EventSource reconnecting.
+        with contextlib.suppress(Exception):
+            await job.emit("done", "done")

@@ -34,7 +34,12 @@ A batch is one zip: `manifest.csv` + image files.
 - `imported`: `true`/`false` (case-insensitive); blank = false.
 - Row-level validation errors (filename not in zip, unparseable ABV,
   missing required field) fail **that row** with a visible error in the
-  results table; they never abort the batch.
+  results table; they never abort the batch. "Fail that row" means the
+  row fails to be *processed* — a row error is an operational outcome
+  outside the three-valued verdict model (the label was never reviewed,
+  so it earns no `fail`), reported and counted separately from reviewed
+  verdicts and surfaced above them in the results table so it is never
+  buried under passes.
 - The UI offers this file as a downloadable template with one example
   row.
 

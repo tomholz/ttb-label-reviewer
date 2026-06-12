@@ -1,0 +1,7 @@
+{# Terminal status line when the runner itself failed: the stream still
+   ends with "done" (the UI must never spin forever), and this replaces
+   the counts line to say what happened. #}
+<strong>Batch processing failed</strong> after
+{{ job.processed }} of {{ job.total }} rows &mdash; an internal error
+stopped the run. The rows above are valid; re-upload the zip to retry
+the rest.

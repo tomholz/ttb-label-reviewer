@@ -219,6 +219,10 @@ class _BatchFragments:
         template = templates.env.get_template("partials/batch_counts.html")
         return template.render(job=job, done=done)
 
+    def failure(self, job: BatchJob) -> str:
+        template = templates.env.get_template("partials/batch_failed.html")
+        return template.render(job=job)
+
 
 _batch_fragments = _BatchFragments()
 _batch_jobs = JobRegistry()

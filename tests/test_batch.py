@@ -1,7 +1,9 @@
-"""Batch flow tests (milestone 6) — API-free (D-5), in two layers:
-the pure zip/CSV parser (contracts.md §2 rule by rule), then the
-endpoints with a fake extractor, streaming real SSE events end to end."""
+"""Batch flow tests (milestone 6) — API-free (D-5), in three layers:
+the pure zip/CSV parser (contracts.md §2 rule by rule), the job runner's
+failure containment, then the endpoints with a fake extractor, streaming
+real SSE events end to end."""
 
+import asyncio
 import csv
 import io
 import re
@@ -9,7 +11,7 @@ import zipfile
 
 import pytest
 from fastapi.testclient import TestClient
-from helpers import WARNING_ON_LABEL, field, make_extraction, warning
+from helpers import WARNING_ON_LABEL, field, make_application, make_extraction, warning
 
 from ttb_label_reviewer import limits
 from ttb_label_reviewer.batch import (
@@ -17,9 +19,12 @@ from ttb_label_reviewer.batch import (
     TEMPLATE_CSV,
     BatchError,
     BatchRow,
+    ParsedBatch,
     RowError,
     parse_batch_zip,
 )
+from ttb_label_reviewer.extraction import LabelImage
+from ttb_label_reviewer.jobs import BatchJob, run_batch
 from ttb_label_reviewer.main import app, get_extractor
 
 # Real magic bytes, fake payloads: the parser sniffs formats, it never
@@ -438,3 +443,68 @@ def test_index_offers_batch_form_and_template(client):
     # Vendored SSE extension, same constraint as htmx itself (D-10.3).
     assert 'src="/static/sse.min.js"' in page
     assert "http://" not in page and "https://" not in page
+
+
+# --- Runner containment: the SSE stream must always terminate ---
+
+
+class BrokenRowRenderer:
+    """Renderer whose review-row template is buggy; the error path and
+    status line still work."""
+
+    def review_row(self, result):
+        raise RuntimeError("template bug")
+
+    def error_row(self, error):
+        return f"error: {error.application_id}: {error.message}"
+
+    def counts(self, job, done):
+        return "counts"
+
+    def failure(self, job):
+        return "failure"
+
+
+class BrokenEverythingRenderer(BrokenRowRenderer):
+    """Even the error-row template is buggy: nothing row-shaped can be
+    emitted, so containment falls to the runner's top-level guard."""
+
+    def error_row(self, error):
+        raise RuntimeError("error template bug too")
+
+
+def reviewable_row(app_id="app-001"):
+    return BatchRow(
+        row_number=2,
+        application=make_application(
+            application_id=app_id, image_filenames=["front.png"]
+        ),
+        images=[LabelImage(filename="front.png", media_type="image/png", data=PNG)],
+    )
+
+
+def run_batch_to_completion(renderer):
+    parsed = ParsedBatch(rows=[reviewable_row()], errors=[])
+    job = BatchJob(job_id="test-job", total=parsed.total)
+    extractor = KeyedExtractor({"front.png": make_extraction()})
+    asyncio.run(run_batch(job, parsed, extractor, renderer))
+    return job
+
+
+def test_render_bug_costs_the_row_not_the_batch():
+    job = run_batch_to_completion(BrokenRowRenderer())
+    names = [event.name for event in job.events]
+    # The row degraded to a row error (contracts.md §2), the stream
+    # still completed normally.
+    assert "row-error" in names
+    assert names[-1] == "done"
+    assert job.counts == {"fail": 0, "needs_review": 0, "pass": 0, "error": 1}
+
+
+def test_runner_failure_still_terminates_the_stream():
+    job = run_batch_to_completion(BrokenEverythingRenderer())
+    # The failure notice replaces the status line, then the terminal
+    # done event closes the stream — a consumer never blocks forever.
+    assert job.events[-2].name == "counts"
+    assert job.events[-2].data == "failure"
+    assert job.events[-1].name == "done"
