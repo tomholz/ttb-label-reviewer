@@ -86,6 +86,22 @@ def test_oversized_image_is_413(fake_extractor):
     assert response.status_code == 413
 
 
+def test_too_many_images_is_413(fake_extractor):
+    files = [png_upload(f"label-{i}.png") for i in range(9)]
+    response = client.post("/api/review", data=FORM, files=files)
+    assert response.status_code == 413
+    assert "at most 8" in response.json()["detail"]
+
+
+def test_combined_image_size_over_cap_is_413(fake_extractor):
+    # Five 4.2 MB images: each under the per-image cap, 21 MB combined.
+    chunk = b"x" * (4_404_019)
+    files = [png_upload(f"label-{i}.png", data=chunk) for i in range(5)]
+    response = client.post("/api/review", data=FORM, files=files)
+    assert response.status_code == 413
+    assert "20 MB" in response.json()["detail"]
+
+
 def test_missing_required_field_is_422(fake_extractor):
     form = {k: v for k, v in FORM.items() if k != "brand_name"}
     response = client.post("/api/review", data=form, files=[png_upload()])

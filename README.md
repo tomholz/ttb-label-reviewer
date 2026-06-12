@@ -8,10 +8,10 @@ verdict. **The AI extracts, the code decides.**
 Live at <https://ttb-label-reviewer.fly.dev/>. Design docs live in
 [docs/](docs/) — start with [docs/build-brief.md](docs/build-brief.md).
 
-> Status: milestone 3 (extraction adapter). Single review is available
-> as an API endpoint (`POST /api/review`); the review UI, golden-set
-> eval, and batch flow land in later milestones. The sections below
-> describe the committed design and note where implementation is
+> Status: milestone 4 (single review UI). Single review is available in
+> the browser at `/` and as an API endpoint (`POST /api/review`); the
+> golden-set eval and batch flow land in later milestones. The sections
+> below describe the committed design and note where implementation is
 > pending.
 
 ## Architecture
@@ -35,8 +35,12 @@ every verdict is explainable down to the character.
 (`src/ttb_label_reviewer/engine/`) and the extraction adapter
 (`src/ttb_label_reviewer/extraction/`) are implemented and CI-tested —
 adapter tests run against a stub client, never the live API (D-5). The
-pipeline is exposed at `POST /api/review`; the web UI lands in
-milestone 4.*
+pipeline is exposed as a server-rendered single-review UI at `/`
+(FastAPI + Jinja2 + vendored HTMX, no build chain per D-11) and as
+`POST /api/review`; both run the identical pipeline path. Every finding
+shows expected vs. extracted evidence — passes included — and the
+warning check renders a character-level diff (D-8: evidence is the
+interface).*
 
 ## Assumptions
 
@@ -138,8 +142,8 @@ Extraction needs an Anthropic API key. Locally, put it in a gitignored
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
 ```
 
-Without a key the app still runs; `POST /api/review` returns a clear
-503. The extraction model defaults to `claude-opus-4-8` and is an
+Without a key the app still runs; a review attempt returns a clear
+503 (a visible error box in the UI). The extraction model defaults to `claude-opus-4-8` and is an
 adapter parameter — it gets tuned (accuracy vs. the ~5 s budget) against
 the golden set in milestone 5, and every eval score records the model ID
 (D-5).
@@ -150,8 +154,9 @@ the golden set in milestone 5, and every eval score records the model ID
 uv run --env-file .env uvicorn ttb_label_reviewer.main:app --reload
 ```
 
-Then open http://127.0.0.1:8000. Single review, until the milestone-4
-UI lands, via the API:
+Then open http://127.0.0.1:8000 for the single-review form: enter the
+application fields, attach one or more label images, press **Review
+label**. The same review is available as an API:
 
 ```sh
 curl -s http://127.0.0.1:8000/api/review \

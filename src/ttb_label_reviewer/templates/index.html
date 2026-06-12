@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Review a label</h2>
+  <p class="card-intro">Enter the application details, attach the label
+     images (front, back, side &mdash; any order), and press
+     <strong>Review label</strong>.</p>
+
+  <form id="review-form"
+        hx-post="/review"
+        hx-target="#results"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data"
+        hx-indicator="#indicator"
+        hx-disabled-elt="find button">
+
+    <div class="field">
+      <label for="beverage_type">Beverage type</label>
+      <input id="beverage_type" type="text" value="Distilled spirits" disabled>
+      <p class="hint">This prototype reviews distilled spirits labels only.</p>
+    </div>
+
+    <div class="field">
+      <label for="brand_name">Brand name</label>
+      <input id="brand_name" name="brand_name" type="text" required
+             placeholder="OLD TOM DISTILLERY" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label for="class_type">Class / type designation</label>
+      <input id="class_type" name="class_type" type="text" required
+             placeholder="Kentucky Straight Bourbon Whiskey" autocomplete="off">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="abv_percent">Alcohol content (% ABV)</label>
+        <input id="abv_percent" name="abv_percent" type="number" required
+               step="any" min="0" max="100" placeholder="45.0" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label for="net_contents">Net contents</label>
+        <input id="net_contents" name="net_contents" type="text" required
+               placeholder="750 mL" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="field field-checkbox">
+      <label>
+        <input name="imported" type="checkbox" value="true">
+        Imported product
+        <span class="hint-inline">(adds the country-of-origin check)</span>
+      </label>
+    </div>
+
+    <div class="field">
+      <label for="images">Label images</label>
+      <input id="images" name="images" type="file" required multiple
+             accept="image/png,image/jpeg,image/webp,image/gif">
+      <p class="hint">Up to 8 images, 5&nbsp;MB each and 20&nbsp;MB total
+         &mdash; JPEG, PNG, WebP, or GIF. A field found on any image
+         satisfies its check.</p>
+    </div>
+
+    <button type="submit" class="submit">Review label</button>
+
+    <div id="indicator" class="indicator" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      Reviewing label set&hellip; usually about 5 seconds.
+    </div>
+  </form>
+</section>
+
+<section id="results" aria-live="polite"></section>
+{% endblock %}
