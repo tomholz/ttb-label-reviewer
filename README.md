@@ -72,10 +72,16 @@ treated as a first-class design constraint, not a footnote:
    engine.
 3. **The extraction prompt demands literal transcription** and forbids
    correction — hygiene that reduces, but does not eliminate, the risk.
-4. **Targeted second-pass verification** on detected warning diffs asks
-   a forced-choice question about the specific span. Known limit: same
-   model, same priors — correlated evidence, a signal-booster on labels
-   already headed for review, never a defense layer.
+4. **Targeted second-pass verification** on detected warning diffs —
+   a forced-choice question about the specific span — is *designed but
+   not implemented*: it is milestone 7, deliberately last in the build
+   order and first in the pre-agreed cut order (D-9), because it is a
+   signal-booster on labels already headed for review, never a defense
+   layer (same model, same priors — correlated evidence). The eval
+   bears the cut out: the default model transcribed every fidelity
+   probe faithfully (no false fails for a second pass to rescue), and
+   the hallucinated reads that were observed report confidence below
+   the 0.9 threshold, so they are already routed to review.
 
 ### Federal transition story (D-10)
 
