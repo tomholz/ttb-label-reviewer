@@ -8,9 +8,10 @@ verdict. **The AI extracts, the code decides.**
 Live at <https://ttb-label-reviewer.fly.dev/>. Design docs live in
 [docs/](docs/) — start with [docs/build-brief.md](docs/build-brief.md).
 
-> Status: milestone 2 (rule engine). The extraction adapter, review UI,
-> golden-set eval, and batch flow land in later milestones; the sections
-> below describe the committed design and note where implementation is
+> Status: milestone 3 (extraction adapter). Single review is available
+> as an API endpoint (`POST /api/review`); the review UI, golden-set
+> eval, and batch flow land in later milestones. The sections below
+> describe the committed design and note where implementation is
 > pending.
 
 ## Architecture
@@ -30,9 +31,12 @@ unit-tested Python. The model is never asked to judge compliance — only
 to read. Consequences: every rule is testable without an API call, and
 every verdict is explainable down to the character.
 
-*Implementation status: the rule engine is implemented and CI-tested
-(`src/ttb_label_reviewer/engine/`); the extraction adapter lands in
-milestone 3.*
+*Implementation status: the rule engine
+(`src/ttb_label_reviewer/engine/`) and the extraction adapter
+(`src/ttb_label_reviewer/extraction/`) are implemented and CI-tested —
+adapter tests run against a stub client, never the live API (D-5). The
+pipeline is exposed at `POST /api/review`; the web UI lands in
+milestone 4.*
 
 ## Assumptions
 
@@ -127,13 +131,36 @@ Requires [uv](https://docs.astral.sh/uv/).
 uv sync
 ```
 
+Extraction needs an Anthropic API key. Locally, put it in a gitignored
+`.env` (or export it):
+
+```sh
+echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
+```
+
+Without a key the app still runs; `POST /api/review` returns a clear
+503. The extraction model defaults to `claude-opus-4-8` and is an
+adapter parameter — it gets tuned (accuracy vs. the ~5 s budget) against
+the golden set in milestone 5, and every eval score records the model ID
+(D-5).
+
 ## Run
 
 ```sh
-uv run uvicorn ttb_label_reviewer.main:app --reload
+uv run --env-file .env uvicorn ttb_label_reviewer.main:app --reload
 ```
 
-Then open http://127.0.0.1:8000.
+Then open http://127.0.0.1:8000. Single review, until the milestone-4
+UI lands, via the API:
+
+```sh
+curl -s http://127.0.0.1:8000/api/review \
+  -F brand_name='OLD TOM DISTILLERY' \
+  -F class_type='Kentucky Straight Bourbon Whiskey' \
+  -F abv_percent=45.0 \
+  -F net_contents='750 mL' \
+  -F images=@spikes/label-renderer/out/label_a_compliant.png
+```
 
 ## Test & lint
 
@@ -148,5 +175,6 @@ uv run ruff format --check .
 Deployed on Fly.io as a single container:
 
 ```sh
+fly secrets set ANTHROPIC_API_KEY=sk-ant-...   # once
 fly deploy
 ```

@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "AI-powered alcohol label verification prototype: the AI extracts, the code decides."
 requires-python = ">=3.13"
 dependencies = [
+    "anthropic>=0.79",
     "fastapi>=0.115",
+    "python-multipart>=0.0.20",
     "uvicorn[standard]>=0.34",
 ]
 
