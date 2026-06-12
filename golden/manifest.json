@@ -1,0 +1,401 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "case_id": "compliant",
+      "purpose": "Fully compliant baseline; every rule should pass.",
+      "application": {
+        "application_id": "compliant",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "compliant.png"
+        ]
+      },
+      "expected": {
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "warning-title-case",
+      "purpose": "Extraction-fidelity probe: title-case lead-in is exactly what the model's all-caps prior will silently 'correct' (highest-value probe). DS-5b must fail on format; DS-5a still passes.",
+      "application": {
+        "application_id": "warning-title-case",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "warning-title-case.png"
+        ]
+      },
+      "expected": {
+        "DS-5b": {
+          "outcome": "fail",
+          "reason": "format"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "warning-fetal-harm",
+      "purpose": "Near-miss warning: one-phrase substitution 'birth defects' -> 'fetal harm'. Measures autocomplete-toward-canonical on DS-5a.",
+      "application": {
+        "application_id": "warning-fetal-harm",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "warning-fetal-harm.png"
+        ]
+      },
+      "expected": {
+        "DS-5a": {
+          "outcome": "fail",
+          "reason": "mismatch"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "warning-dropped-2",
+      "purpose": "Near-miss warning: the '(2)' clause marker is dropped. A single-token omission the model's prior wants to restore.",
+      "application": {
+        "application_id": "warning-dropped-2",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "warning-dropped-2.png"
+        ]
+      },
+      "expected": {
+        "DS-5a": {
+          "outcome": "fail",
+          "reason": "mismatch"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "warning-hyphenated",
+      "purpose": "Canonical warning printed with end-of-line hyphenation (bever-/ages, im-/pairs, machin-/ery). Extraction must preserve the hyphen+break; DS-5a normalization rejoins it. All rules pass.",
+      "application": {
+        "application_id": "warning-hyphenated",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "warning-hyphenated.png"
+        ]
+      },
+      "expected": {
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "warning-back-label",
+      "purpose": "Multi-image label set: warning appears only on a separate back label (27 CFR 16.21 expressly permits this). A field satisfied on any image satisfies the rule.",
+      "application": {
+        "application_id": "warning-back-label",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "warning-back-label-front.png",
+          "warning-back-label-back.png"
+        ]
+      },
+      "expected": {
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "warning-missing",
+      "purpose": "Warning entirely absent: missing (not illegible) routing.",
+      "application": {
+        "application_id": "warning-missing",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "warning-missing.png"
+        ]
+      },
+      "expected": {
+        "DS-5a": {
+          "outcome": "fail",
+          "reason": "missing"
+        },
+        "DS-5b": {
+          "outcome": "fail",
+          "reason": "missing"
+        },
+        "DS-5c": {
+          "outcome": "needs_review",
+          "reason": "missing"
+        },
+        "DS-5d": {
+          "outcome": "needs_review",
+          "reason": "missing"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "brand-case-variance",
+      "purpose": "STONE'S THROW on the label vs Stone's Throw in the application: fuzzy-equal, so needs_review, never fail (Dave's judgment case).",
+      "application": {
+        "application_id": "brand-case-variance",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "Stone's Throw",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "brand-case-variance.png"
+        ]
+      },
+      "expected": {
+        "DS-1": {
+          "outcome": "needs_review",
+          "reason": "mismatch"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "abv-within-band",
+      "purpose": "Label 45.2% vs application 45.0%: inside the 0.3 pp band, so needs_review. Proof omitted so DS-8 stays out of the way.",
+      "application": {
+        "application_id": "abv-within-band",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "abv-within-band.png"
+        ]
+      },
+      "expected": {
+        "DS-3": {
+          "outcome": "needs_review",
+          "reason": "mismatch"
+        },
+        "DS-8": {
+          "outcome": "not_applicable"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "abv-beyond-band",
+      "purpose": "Label 45.4% vs application 45.0%: beyond 0.3 pp, clear fail.",
+      "application": {
+        "application_id": "abv-beyond-band",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "abv-beyond-band.png"
+        ]
+      },
+      "expected": {
+        "DS-3": {
+          "outcome": "fail",
+          "reason": "mismatch"
+        },
+        "DS-8": {
+          "outcome": "not_applicable"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "abv-bare-format",
+      "purpose": "Label says '45% ABV' \u2014 right number, but ABV is not a permitted abbreviation (5.65(a)): needs_review on format. Also probes that extraction returns the bare string rather than expanding it.",
+      "application": {
+        "application_id": "abv-bare-format",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "abv-bare-format.png"
+        ]
+      },
+      "expected": {
+        "DS-3": {
+          "outcome": "needs_review",
+          "reason": "format"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "proof-mismatch",
+      "purpose": "86 Proof printed beside 45% Alc./Vol.: DS-8 internal cross-check flags it for a human; doubles as an extraction-quality canary.",
+      "application": {
+        "application_id": "proof-mismatch",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "proof-mismatch.png"
+        ]
+      },
+      "expected": {
+        "DS-8": {
+          "outcome": "needs_review",
+          "reason": "mismatch"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "missing-fields",
+      "purpose": "Net contents and name/address absent: DS-4 routes to needs_review (contents may be blown into the glass); DS-6 fails on missing.",
+      "application": {
+        "application_id": "missing-fields",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "missing-fields.png"
+        ]
+      },
+      "expected": {
+        "DS-4": {
+          "outcome": "needs_review",
+          "reason": "missing"
+        },
+        "DS-6": {
+          "outcome": "fail",
+          "reason": "missing"
+        },
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "imported-with-origin",
+      "purpose": "Imported case: country-of-origin present, DS-7 evaluated and passes.",
+      "application": {
+        "application_id": "imported-with-origin",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "NORTH HARBOUR",
+        "class_type": "Canadian Whisky",
+        "abv_percent": 40.0,
+        "net_contents": "750 mL",
+        "imported": true,
+        "image_filenames": [
+          "imported-with-origin.png"
+        ]
+      },
+      "expected": {}
+    },
+    {
+      "case_id": "imported-missing-origin",
+      "purpose": "Imported but no country-of-origin statement: DS-7 fails on missing.",
+      "application": {
+        "application_id": "imported-missing-origin",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "NORTH HARBOUR",
+        "class_type": "Canadian Whisky",
+        "abv_percent": 40.0,
+        "net_contents": "750 mL",
+        "imported": true,
+        "image_filenames": [
+          "imported-missing-origin.png"
+        ]
+      },
+      "expected": {
+        "DS-7": {
+          "outcome": "fail",
+          "reason": "missing"
+        }
+      }
+    },
+    {
+      "case_id": "degraded",
+      "purpose": "Compliant content through rotation, blur, noise, and heavy JPEG compression \u2014 still human-readable, so the tool must read it (pass) or honestly route to review; used to tune the illegibility threshold.",
+      "application": {
+        "application_id": "degraded",
+        "beverage_type": "distilled_spirits",
+        "brand_name": "OLD TOM RESERVE",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "abv_percent": 45.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "degraded.jpg"
+        ]
+      },
+      "expected": {
+        "DS-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    }
+  ]
+}

@@ -30,7 +30,8 @@ class AnthropicExtractor:
     """Vision extraction via the Anthropic API.
 
     The client resolves ANTHROPIC_API_KEY from the environment; pass
-    `client` explicitly only in tests.
+    `client` explicitly only in tests or in tooling that needs its own
+    retry policy (the eval runner waits out rate limits; the UI must not).
     """
 
     def __init__(

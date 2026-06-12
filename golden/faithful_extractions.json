@@ -1,0 +1,531 @@
+{
+  "compliant": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "warning-title-case": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "Government Warning: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "warning-fetal-harm": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of fetal harm. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "warning-dropped-2": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects.\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "warning-hyphenated": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic bever-\nages during pregnancy because of the risk of birth\ndefects. (2) Consumption of alcoholic beverages im-\npairs your ability to drive a car or operate machin-\nery, and may cause health problems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "warning-back-label": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "warning-missing": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": null
+  },
+  "brand-case-variance": {
+    "brand_name": {
+      "raw": "STONE'S THROW",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "abv-within-band": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45.2% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": null,
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "abv-beyond-band": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45.4% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": null,
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "abv-bare-format": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% ABV",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "proof-mismatch": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "86 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "missing-fields": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": null,
+    "name_address": null,
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "imported-with-origin": {
+    "brand_name": {
+      "raw": "NORTH HARBOUR",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Canadian Whisky",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "40% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "80 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Imported by Harbour Imports Co., Buffalo, NY",
+      "confidence": 0.97
+    },
+    "country_of_origin": {
+      "raw": "Product of Canada",
+      "confidence": 0.97
+    },
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "imported-missing-origin": {
+    "brand_name": {
+      "raw": "NORTH HARBOUR",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Canadian Whisky",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "40% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "80 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Imported by Harbour Imports Co., Buffalo, NY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "degraded": {
+    "brand_name": {
+      "raw": "OLD TOM RESERVE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Kentucky Straight Bourbon Whiskey",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "45% Alc./Vol.",
+      "confidence": 0.97
+    },
+    "proof": {
+      "raw": "90 Proof",
+      "confidence": 0.97
+    },
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Bottled by Old Tom Distillery, Bardstown, KY",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  }
+}

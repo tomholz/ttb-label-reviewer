@@ -118,6 +118,13 @@ class EngineConfig(BaseModel):
     contract (contracts.md §3)."""
 
     # Below this self-reported confidence a field routes to needs_review /
-    # illegible — never fail, never a silent pass. Tuned against the golden
-    # set in milestone 5.
-    illegibility_threshold: float = 0.5
+    # illegible — never fail, never a silent pass. Tuned in milestone 5 via
+    # golden/probe_illegibility.py: on the degradation ladder, faithful
+    # warning reads reported >= 0.93 while reads that had silently reverted
+    # to the canonical prior reported 0.80-0.85 — so 0.9 splits the observed
+    # gap, and the old 0.5 default caught nothing (the model never reported
+    # below 0.60 even while hallucinating). All golden-set fields score
+    # >= 0.95, so this raise costs no false reviews there. Caveat: measured
+    # on one synthetic label family; confidence is NOT a reliable
+    # hallucination detector in general (see README, eval scoreboard).
+    illegibility_threshold: float = 0.9

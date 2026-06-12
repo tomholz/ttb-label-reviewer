@@ -8,11 +8,10 @@ verdict. **The AI extracts, the code decides.**
 Live at <https://ttb-label-reviewer.fly.dev/>. Design docs live in
 [docs/](docs/) — start with [docs/build-brief.md](docs/build-brief.md).
 
-> Status: milestone 4 (single review UI). Single review is available in
+> Status: milestone 5 (golden set + eval). Single review is available in
 > the browser at `/` and as an API endpoint (`POST /api/review`); the
-> golden-set eval and batch flow land in later milestones. The sections
-> below describe the committed design and note where implementation is
-> pending.
+> golden set, eval harness, and scoreboard are committed below. The
+> batch flow lands in milestone 6.
 
 ## Architecture
 
@@ -100,12 +99,65 @@ designed-in transition story:
 
 ## Eval scoreboard
 
-*Populated in milestone 5.* Golden-set results are recorded with three
-reproducibility fields — (a) the model identifier, (b) a hash of the
-extraction prompt, (c) the golden-set manifest version/hash — because a
-bare score is not a reproducible claim; with those three fields it is.
-Eval runs are a deliberate script with a committed scoreboard, not a
-blocking CI gate (D-5).
+The golden set is 16 rendered labels with known, deliberate defects
+([golden/](golden/), manifest per contracts.md §5) — including the
+extraction-fidelity probes that exist nowhere else: title-case
+"Government Warning:", "birth defects" → "fetal harm", a dropped "(2)",
+end-of-line hyphenation, a warning on a separate back label, and a
+degraded image. Every score records three reproducibility fields — (a)
+the model identifier, (b) a hash of the extraction prompt, (c) the
+golden-set manifest version/hash — because a bare score is not a
+reproducible claim; with those three fields it is. Eval runs are a
+deliberate script with a committed scoreboard, not a blocking CI gate
+(D-5).
+
+| Date | Model | Prompt hash | Golden set | Rule outcomes | Cases correct | Mean latency |
+|---|---|---|---|---|---|---|
+| 2026-06-11 | claude-opus-4-8 | `6886dc45365a` | v1 `464fabaa2311` | 176/176 (100.0%) | 16/16 | 5.7 s |
+| 2026-06-11 | claude-sonnet-4-6 | `6886dc45365a` | v1 `464fabaa2311` | 176/176 (100.0%) | 16/16 | 6.3 s |
+| 2026-06-11 | claude-haiku-4-5-20251001 | `6886dc45365a` | v1 `464fabaa2311` | 172/176 (97.7%) | 14/16 | 4.0 s |
+| 2026-06-11 | claude-haiku-4-5-20251001 | `6886dc45365a` | v1 `464fabaa2311` | 148/176 (84.1%) | 11/16 | 4.2 s |
+
+- **Model decision: the default stays `claude-opus-4-8`** (perfect
+  score, ~5.7 s warm ≈ the D-3 budget). Sonnet matched it with no
+  latency win. The two Haiku rows are *the same configuration run
+  twice*: faster but noisy — every miss was conservative (visual
+  bold/placement observations coming back "uncertain", routing
+  pass-worthy labels to `needs_review`) plus one malformed-output
+  row-level error; no false pass was observed.
+- Opus and Sonnet transcribed **every fidelity probe faithfully**,
+  including the title-case lead-in — the case the model's prior most
+  wants to "correct".
+- Latencies are warm; the first request after idle pays a one-time
+  ~47 s structured-output schema compilation on the API side.
+- Per-run detail (including per-field confidences) lands in
+  `golden/results/` (gitignored); this table is the committed artifact.
+
+### Illegibility threshold: tuned to 0.9, with a caveat that matters
+
+The eval alone could not tune the threshold: models report ≥ 0.95
+confidence on every golden field, degraded case included. So
+[golden/probe_illegibility.py](golden/probe_illegibility.py) escalates
+blur/downscale on a label whose warning *deviates* from canonical
+(the "fetal harm" case), where reading and prior disagree:
+
+| Degradation | Confidence | Transcription |
+|---|---|---|
+| up to blur 4 + 35% scale | 0.93–0.98 | faithful, deviation preserved |
+| blur 6 + 25% scale and beyond | 0.80–0.85 | **silently reverts to canonical text** |
+
+That second row is the hallucination risk from the requirements doc,
+now measured: under heavy degradation the model autocompletes toward
+the memorized warning *while still reporting 0.85 confidence*. The
+default `illegibility_threshold` is therefore **0.9** — it splits the
+observed gap (faithful ≥ 0.93, hallucinated ≤ 0.85) and costs nothing
+on the golden set (all fields ≥ 0.95). The old 0.5 default caught
+nothing: confidence never fell below 0.60 even at unreadable
+degradation. Honest caveat: this is one synthetic label family and a
+narrow margin — confidence self-report is **not** a reliable
+hallucination detector; the structural defenses (canonical text out of
+prompts, deterministic comparison, this golden set) remain the real
+ones.
 
 ## Known limitations
 
@@ -143,10 +195,10 @@ echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
 ```
 
 Without a key the app still runs; a review attempt returns a clear
-503 (a visible error box in the UI). The extraction model defaults to `claude-opus-4-8` and is an
-adapter parameter — it gets tuned (accuracy vs. the ~5 s budget) against
-the golden set in milestone 5, and every eval score records the model ID
-(D-5).
+503 (a visible error box in the UI). The extraction model defaults to
+`claude-opus-4-8` — an adapter parameter, tuned against the golden set
+(see the eval scoreboard above for the measured accuracy/latency
+trade-off and why the cheaper models were not adopted).
 
 ## Run
 
@@ -173,6 +225,30 @@ curl -s http://127.0.0.1:8000/api/review \
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
+```
+
+CI includes the golden-set integrity tests: the manifest must validate
+against the contracts, and every expected outcome must follow from the
+rule engine given a perfectly faithful extraction
+(`golden/faithful_extractions.json`) — so a live eval miss can only mean
+extraction infidelity, never a manifest/engine disagreement. No API
+calls run in CI (D-5).
+
+## Golden set & eval
+
+```sh
+# score a model against the golden set (writes golden/results/, prints
+# a ready-to-paste scoreboard row)
+uv run --env-file .env python -m ttb_label_reviewer.evaluation
+uv run --env-file .env python -m ttb_label_reviewer.evaluation \
+  --model claude-haiku-4-5-20251001 --threshold 0.9 --workers 2
+
+# regenerate the golden images + manifest from their single source of
+# truth (macOS fonts; a deliberate act — bump MANIFEST_VERSION)
+uv run python golden/generate.py
+
+# the degradation/confidence probe behind the threshold decision
+uv run --env-file .env python golden/probe_illegibility.py --case warning-fetal-harm
 ```
 
 ## Deploy

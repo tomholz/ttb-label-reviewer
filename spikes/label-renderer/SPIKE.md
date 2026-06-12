@@ -1,5 +1,11 @@
 # Spike: programmatic label rendering for the golden set
 
+> **Promoted** (milestone 5): the production generator now lives at
+> [golden/generate.py](../../golden/generate.py) — 16 cases, manifest per
+> contracts.md §5, plus the degradation pipeline and hyphenated-warning
+> variant this spike recommended. This directory stays as the record of
+> the GO decision; nothing imports from it.
+
 **Question:** can we render realistic label images whose text is exact by
 construction, including the DS-5 bold-lead-in/regular-remainder contrast?
 
