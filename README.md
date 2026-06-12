@@ -8,10 +8,10 @@ verdict. **The AI extracts, the code decides.**
 Live at <https://ttb-label-reviewer.fly.dev/>. Design docs live in
 [docs/](docs/) — start with [docs/build-brief.md](docs/build-brief.md).
 
-> Status: milestone 1 (skeleton + deploy). The rule engine, extraction
-> adapter, review UI, golden-set eval, and batch flow land in later
-> milestones; the sections below describe the committed design and note
-> where implementation is pending.
+> Status: milestone 2 (rule engine). The extraction adapter, review UI,
+> golden-set eval, and batch flow land in later milestones; the sections
+> below describe the committed design and note where implementation is
+> pending.
 
 ## Architecture
 
@@ -30,8 +30,9 @@ unit-tested Python. The model is never asked to judge compliance — only
 to read. Consequences: every rule is testable without an API call, and
 every verdict is explainable down to the character.
 
-*Implementation status: rule engine lands in milestone 2, extraction
-adapter in milestone 3.*
+*Implementation status: the rule engine is implemented and CI-tested
+(`src/ttb_label_reviewer/engine/`); the extraction adapter lands in
+milestone 3.*
 
 ## Assumptions
 
