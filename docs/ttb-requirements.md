@@ -8,7 +8,9 @@ rules implemented in code. Each rule cites its authority.
 Wine (27 CFR Part 4) and malt beverages (27 CFR Part 7) are stubbed below
 for later build-out using the same schema.
 
-**Verified against:** eCFR current as of June 2026. Note that the
+**Verified against:** eCFR current as of June 2026 — all Part 5 and
+Part 16 citations below checked against the eCFR full text
+(versioner API, 2026-06-01). Note that the
 Distilled Spirits Beverage Alcohol Manual (BAM, TTB P 5110.7) dates from
 04/2007 and predates the 2022 reorganization of Part 5 (T.D. TTB-176);
 where they conflict, the eCFR controls.
@@ -121,7 +123,12 @@ unreadable" is `illegible`.
   "750ML")
 - **check:** Net contents stated on label and matches application.
   Whether the value is an authorized standard of fill is **out of scope**.
-- **citation:** 27 CFR 5.63(a), 5.70; BAM Ch. 1 §6
+- **note:** 5.63(b)(2) permits net contents to be blown, embossed, or
+  molded into the container instead of printed on a label — so a
+  label-image-only review can produce a false `missing`. Missing net
+  contents therefore routes to `needs_review` (reason `missing`), never
+  `fail`.
+- **citation:** 27 CFR 5.63(b)(2), 5.70; BAM Ch. 1 §6
 
 ### DS-5 — Government health warning
 
@@ -154,8 +161,9 @@ fidelity below):
   "GOVERNMENT WARNING"; the remainder's case is unspecified, and
   wording, not case, is what 16.21 fixes. Lead-in case is checked by
   DS-5b; placement/layout is checked by DS-5d.
-- **citation:** 27 CFR 16.21 (text); applicability to spirits ≥0.5% ABV
-  per 27 CFR 16.20 and 5.71(a)
+- **citation:** 27 CFR 16.21 (text); applicability per 16.20 (operative
+  requirement), 16.10 (definition of "alcoholic beverage" — the ≥0.5%
+  ABV threshold), and 5.7(a) (Part 5 cross-reference to Part 16)
 
 #### DS-5b — "GOVERNMENT WARNING" capitalization
 
@@ -218,7 +226,7 @@ fidelity below):
 - **applies_when:** `imported == true`
 - **check:** Country-of-origin statement appears. (CBP rules control the
   form; presence-only check here.)
-- **citation:** 27 CFR 5.69; 19 CFR Part 134; BAM Ch. 1 §5
+- **citation:** 27 CFR 5.69; 19 CFR parts 102 and 134; BAM Ch. 1 §5
 
 ### DS-8 — Proof ↔ ABV internal consistency
 
@@ -312,6 +320,12 @@ under FDA rules.
   (27 CFR 5.52, 16.22(a)(1), 16.22(a)(4), 16.22(b)) — not verifiable
   from a single unscaled image (warning placement itself is in scope as
   the visual-mode check DS-5d)
+- Same-field-of-vision rule (5.63(a)): brand name, class/type, and
+  alcohol content must appear together within a single field of vision
+  (one side of the container; any 40% of circumference for cylinders).
+  Under the untagged multi-image contract, a label set could pass every
+  per-field check while splitting these three items across sides — this
+  tool cannot detect that, and says so rather than pretending otherwise
 - Class/type lawfulness validation (BAM Ch. 4 taxonomy)
 - Standards of fill (authorized container sizes)
 - Formula, ingredient-declaration, organic, and advertising rules
