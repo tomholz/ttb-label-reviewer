@@ -1,3 +1,4 @@
+import asyncio
 import os
 import uuid
 from functools import lru_cache
@@ -10,13 +11,16 @@ from fastapi.exception_handlers import (
     request_validation_exception_handler,
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from . import limits
+from .batch import TEMPLATE_CSV, BatchError, RowError, parse_batch_zip
 from .engine import ApplicationRecord, BeverageType, ReviewResult
 from .extraction import AnthropicExtractor, ExtractionError, Extractor, LabelImage
 from .extraction.base import ALLOWED_MEDIA_TYPES
+from .jobs import BatchJob, JobRegistry, SSEEvent, run_batch
 from .pipeline import review_label_set
 
 _PACKAGE_DIR = Path(__file__).parent
@@ -26,18 +30,6 @@ app = FastAPI(title="TTB Label Reviewer")
 # runtime outbound dependency is the model API.
 app.mount("/static", StaticFiles(directory=_PACKAGE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=_PACKAGE_DIR / "templates")
-
-# Upload caps, enforced here so an oversized upload is a clear 413, never
-# an opaque vision-API failure. Derivation: the Anthropic API accepts a
-# 32 MB request body and base64 inflates image bytes by 4/3, so 20 MB of
-# raw images encodes to ~27 MB — under the limit with headroom for prompt
-# and JSON. 8 images is double the realistic maximum for an untagged label
-# set (front, back, side, neck). 5 MB/image is our own cap (the direct API
-# allows ~10 MB base64-encoded per image); it bounds upload time and keeps
-# any single image well clear of the request limit.
-_MAX_IMAGE_BYTES = 5 * 1024 * 1024
-_MAX_IMAGES_PER_SET = 8
-_MAX_TOTAL_IMAGE_BYTES = 20 * 1024 * 1024
 
 
 @lru_cache
@@ -88,11 +80,11 @@ async def _validation_exception(request: Request, exc: RequestValidationError):
 
 
 def _read_label_images(images: list[UploadFile]) -> list[LabelImage]:
-    if len(images) > _MAX_IMAGES_PER_SET:
+    if len(images) > limits.MAX_IMAGES_PER_SET:
         raise HTTPException(
             status_code=413,
             detail=f"Too many images ({len(images)}): a review accepts at "
-            f"most {_MAX_IMAGES_PER_SET}.",
+            f"most {limits.MAX_IMAGES_PER_SET}.",
         )
     label_images: list[LabelImage] = []
     total_bytes = 0
@@ -104,13 +96,13 @@ def _read_label_images(images: list[UploadFile]) -> list[LabelImage]:
                 f"{upload.filename!r}; use JPEG, PNG, WebP, or GIF.",
             )
         data = upload.file.read()
-        if len(data) > _MAX_IMAGE_BYTES:
+        if len(data) > limits.MAX_IMAGE_BYTES:
             raise HTTPException(
                 status_code=413,
                 detail=f"Image {upload.filename!r} exceeds the 5 MB limit.",
             )
         total_bytes += len(data)
-        if total_bytes > _MAX_TOTAL_IMAGE_BYTES:
+        if total_bytes > limits.MAX_TOTAL_IMAGE_BYTES:
             raise HTTPException(
                 status_code=413,
                 detail="Combined image size exceeds the 20 MB limit for one review.",
@@ -206,6 +198,103 @@ def ui_review(
     )
     return templates.TemplateResponse(
         request, "partials/results.html", {"result": result}
+    )
+
+
+class _BatchFragments:
+    """jobs.BatchRenderer implementation: SSE event payloads rendered
+    from the same Jinja templates as the rest of the UI. Rendered
+    without a Request — these fragments travel over the event stream,
+    not an HTTP response."""
+
+    def review_row(self, result: ReviewResult) -> str:
+        template = templates.env.get_template("partials/batch_row.html")
+        return template.render(result=result)
+
+    def error_row(self, error: RowError) -> str:
+        template = templates.env.get_template("partials/batch_error_row.html")
+        return template.render(error=error)
+
+    def counts(self, job: BatchJob, done: bool) -> str:
+        template = templates.env.get_template("partials/batch_counts.html")
+        return template.render(job=job, done=done)
+
+
+_batch_fragments = _BatchFragments()
+_batch_jobs = JobRegistry()
+
+# SSE responses must reach the browser event by event: no caching, and
+# no proxy buffering (X-Accel-Buffering is honored by Fly's proxy).
+_SSE_HEADERS = {"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
+
+
+@app.get("/batch/template")
+def batch_template() -> Response:
+    """The downloadable manifest template (contracts.md §2), named
+    manifest.csv because that is what the zip must contain."""
+    return Response(
+        TEMPLATE_CSV,
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="manifest.csv"'},
+    )
+
+
+@app.post("/batch", response_class=HTMLResponse)
+async def ui_batch(
+    request: Request,
+    batch_zip: Annotated[UploadFile, File()],
+    extractor: Annotated[Extractor, Depends(get_extractor)],
+) -> HTMLResponse:
+    """Accept the zip, fail fast on batch-level problems, then start the
+    runner and return the results-table skeleton; rows arrive over SSE."""
+    data = await batch_zip.read()
+    if len(data) > limits.MAX_BATCH_ZIP_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="The zip exceeds the "
+            f"{limits.MAX_BATCH_ZIP_BYTES // (1024 * 1024)} MB upload limit; "
+            "split the batch into smaller zips.",
+        )
+    try:
+        parsed = parse_batch_zip(data)
+    except BatchError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    job = _batch_jobs.create(total=parsed.total)
+    # The runner outlives this request on purpose: results stream to the
+    # /batch/{job_id}/events connection the returned fragment opens.
+    job.task = asyncio.create_task(run_batch(job, parsed, extractor, _batch_fragments))
+    return templates.TemplateResponse(
+        request, "partials/batch_running.html", {"job": job}
+    )
+
+
+@app.get("/batch/{job_id}/events")
+async def batch_events(job_id: str, request: Request) -> StreamingResponse:
+    job = _batch_jobs.get(job_id)
+    if job is None:
+        # A stale page reconnecting after the job was purged: answer with
+        # a terminal stream instead of a 404, which EventSource would
+        # retry forever.
+        async def gone():
+            yield SSEEvent(
+                id=0,
+                name="counts",
+                data="This batch is no longer available; upload it again.",
+            ).serialize()
+            yield SSEEvent(id=1, name="done", data="done").serialize()
+
+        return StreamingResponse(
+            gone(), media_type="text/event-stream", headers=_SSE_HEADERS
+        )
+
+    start_index = 0
+    last_event_id = request.headers.get("last-event-id", "")
+    if last_event_id.isdigit():
+        # Reconnect: replay only what the browser hasn't seen.
+        start_index = int(last_event_id) + 1
+    return StreamingResponse(
+        job.stream(start_index), media_type="text/event-stream", headers=_SSE_HEADERS
     )
 
 

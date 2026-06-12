@@ -1,0 +1,18 @@
+{# One reviewed batch row: the summary line carries the verdict and the
+   per-rule counts for triage (the outcome model's "2 fail, 1 review,
+   4 pass", not just the aggregate); expanding shows the same per-rule
+   findings as a single review. #}
+{% set verdict_labels = {"pass": "Pass", "needs_review": "Needs review", "fail": "Fail"} %}
+<details class="batch-row outcome-{{ result.verdict }}">
+  <summary>
+    <span class="badge badge-{{ result.verdict }}">{{ verdict_labels[result.verdict] }}</span>
+    <span class="batch-app-id">{{ result.application_id }}</span>
+    <span class="batch-row-counts">
+      {{ result.counts.fail }} fail &middot;
+      {{ result.counts.needs_review }} review &middot;
+      {{ result.counts.pass_ }} pass{% if result.counts.not_applicable %} &middot;
+      {{ result.counts.not_applicable }} n/a{% endif %}
+    </span>
+  </summary>
+  {% with findings = result.findings %}{% include "partials/findings.html" %}{% endwith %}
+</details>

@@ -72,4 +72,40 @@
 </section>
 
 <section id="results" aria-live="polite"></section>
+
+<section class="card">
+  <h2>Review a batch</h2>
+  <p class="card-intro">Upload one zip containing <code>manifest.csv</code>
+     and the label images it names &mdash; one row per application.
+     <a href="/batch/template" download>Download the CSV template</a> to
+     start from the expected columns.</p>
+
+  <form id="batch-form"
+        hx-post="/batch"
+        hx-target="#batch-results"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data"
+        hx-indicator="#batch-indicator"
+        hx-disabled-elt="find button">
+
+    <div class="field">
+      <label for="batch_zip">Batch zip</label>
+      <input id="batch_zip" name="batch_zip" type="file" required
+             accept=".zip,application/zip,application/x-zip-compressed">
+      <p class="hint">Up to 500 rows. In the manifest, list each row's
+         images separated by semicolons (e.g.
+         <code>front.png;back.png</code>); a row with a problem is
+         reported in the results and never stops the rest of the batch.</p>
+    </div>
+
+    <button type="submit" class="submit">Review batch</button>
+
+    <div id="batch-indicator" class="indicator" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      Uploading batch&hellip; results stream in as each label is reviewed.
+    </div>
+  </form>
+</section>
+
+<section id="batch-results"></section>
 {% endblock %}

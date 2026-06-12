@@ -1,0 +1,35 @@
+{# Returned by POST /batch: the results-table skeleton, wired to the
+   job's SSE stream. Rows arrive in completion order; the fixed group
+   order on the page does the sorting (errors on top so they are never
+   buried under passes, then fail > needs_review > pass). Each group
+   appends rows it receives by event name; empty groups stay hidden via
+   CSS. sse-close stops the browser reconnecting once "done" arrives. #}
+<div class="card batch-card"
+     hx-ext="sse"
+     sse-connect="/batch/{{ job.job_id }}/events"
+     sse-close="done">
+  <h2>Batch results</h2>
+  <p class="application-id">Batch {{ job.job_id }} &mdash; {{ job.total }} rows</p>
+
+  <div class="batch-status" role="status" sse-swap="counts">
+    <span class="spinner" aria-hidden="true"></span>
+    Starting&hellip; first results usually arrive within seconds.
+  </div>
+
+  <section class="batch-group">
+    <h3>Row errors <span class="group-hint">could not be reviewed &mdash; fix the row and re-upload</span></h3>
+    <div class="batch-rows" sse-swap="row-error" hx-swap="beforeend"></div>
+  </section>
+  <section class="batch-group">
+    <h3>Fail</h3>
+    <div class="batch-rows" sse-swap="row-fail" hx-swap="beforeend"></div>
+  </section>
+  <section class="batch-group">
+    <h3>Needs review</h3>
+    <div class="batch-rows" sse-swap="row-needs_review" hx-swap="beforeend"></div>
+  </section>
+  <section class="batch-group">
+    <h3>Pass</h3>
+    <div class="batch-rows" sse-swap="row-pass" hx-swap="beforeend"></div>
+  </section>
+</div>

@@ -1,0 +1,10 @@
+{# One row-level error (contracts.md §2): shown inline in the results
+   table; the row failed, the batch did not. #}
+<div class="batch-row batch-row-error">
+  <span class="badge badge-error">Error</span>
+  <span class="batch-app-id">
+    {%- if error.application_id %}{{ error.application_id }} (row {{ error.row_number }})
+    {%- else %}row {{ error.row_number }}{% endif -%}
+  </span>
+  <span class="batch-error-message">{{ error.message }}</span>
+</div>

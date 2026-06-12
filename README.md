@@ -8,10 +8,11 @@ verdict. **The AI extracts, the code decides.**
 Live at <https://ttb-label-reviewer.fly.dev/>. Design docs live in
 [docs/](docs/) — start with [docs/build-brief.md](docs/build-brief.md).
 
-> Status: milestone 5 (golden set + eval). Single review is available in
-> the browser at `/` and as an API endpoint (`POST /api/review`); the
-> golden set, eval harness, and scoreboard are committed below. The
-> batch flow lands in milestone 6.
+> Status: milestone 6 (batch flow). Single review and batch review are
+> both available in the browser at `/`; single review also as an API
+> endpoint (`POST /api/review`). The golden set, eval harness, and
+> scoreboard are committed below. Second-pass verification (milestone 7,
+> first in the cut order) remains.
 
 ## Architecture
 
@@ -35,11 +36,12 @@ every verdict is explainable down to the character.
 (`src/ttb_label_reviewer/extraction/`) are implemented and CI-tested —
 adapter tests run against a stub client, never the live API (D-5). The
 pipeline is exposed as a server-rendered single-review UI at `/`
-(FastAPI + Jinja2 + vendored HTMX, no build chain per D-11) and as
-`POST /api/review`; both run the identical pipeline path. Every finding
-shows expected vs. extracted evidence — passes included — and the
-warning check renders a character-level diff (D-8: evidence is the
-interface).*
+(FastAPI + Jinja2 + vendored HTMX, no build chain per D-11), as
+`POST /api/review`, and as the batch flow (zip + CSV manifest in,
+SSE-streamed results table out); all run the identical pipeline path.
+Every finding shows expected vs. extracted evidence — passes included —
+and the warning check renders a character-level diff (D-8: evidence is
+the interface).*
 
 ## Assumptions
 
@@ -218,6 +220,24 @@ curl -s http://127.0.0.1:8000/api/review \
   -F net_contents='750 mL' \
   -F images=@spikes/label-renderer/out/label_a_compliant.png
 ```
+
+### Batch review
+
+The batch form on the same page takes one zip containing a
+`manifest.csv` (template downloadable from the form; one row per
+application, `image_filenames` semicolon-separated) plus the label
+images it names. Results stream in over SSE as each label completes
+(rows are reviewed 4 at a time), grouped worst-first — row errors on
+top, then fail > needs review > pass — with a live counts line; each
+row expands to the same per-rule findings as a single review. A row
+with a problem (missing image, unparseable ABV, blank field) is
+reported inline and never stops the rest of the batch (contracts.md
+§2). Limits: 500 rows and a 100 MB zip per batch.
+
+Batch jobs live in process memory only — consistent with the
+nothing-is-retained posture (D-10.4). A dropped connection resumes
+where it left off (SSE `Last-Event-ID` replay), but a server restart
+mid-batch loses the job; re-upload the zip.
 
 ## Test & lint
 

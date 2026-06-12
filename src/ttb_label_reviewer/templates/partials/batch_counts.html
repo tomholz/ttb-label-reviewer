@@ -1,0 +1,12 @@
+{# The live status line: re-sent (whole) after every row so the SSE swap
+   replaces it in place. `done` styles the terminal state. #}
+{% if done %}
+<strong>Batch complete</strong> &mdash;
+{% else %}
+<span class="spinner" aria-hidden="true"></span>
+Processed {{ job.processed }} of {{ job.total }} &mdash;
+{% endif %}
+{{ job.counts["fail"] }} fail &middot;
+{{ job.counts["needs_review"] }} needs review &middot;
+{{ job.counts["pass"] }} pass &middot;
+{{ job.counts["error"] }} row error{{ "" if job.counts["error"] == 1 else "s" }}

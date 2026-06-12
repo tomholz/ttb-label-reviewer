@@ -1,7 +1,5 @@
 {# Review result fragment (contracts.md §4): verdict banner, counts, then
-   one finding per rule in checklist order. Evidence is the interface
-   (D-8): expected/actual shown on every evaluated finding, passes
-   included; DS-5a carries a character-level diff. #}
+   one finding per rule in checklist order (partials/findings.html). #}
 {% set verdict_labels = {"pass": "Pass", "needs_review": "Needs review", "fail": "Fail"} %}
 {% set evaluated = result.counts.fail + result.counts.needs_review + result.counts.pass_ %}
 <div class="card results-card">
@@ -17,47 +15,5 @@
   </div>
   <p class="application-id">Application {{ result.application_id }}</p>
 
-  <ol class="findings">
-    {% for f in result.findings %}
-    <li class="finding outcome-{{ f.outcome }}">
-      <div class="finding-head">
-        <span class="badge badge-{{ f.outcome }}">
-          {%- if f.outcome == "pass" %}Pass
-          {%- elif f.outcome == "fail" %}Fail
-          {%- elif f.outcome == "needs_review" %}Needs review
-          {%- else %}N/A{% endif -%}
-        </span>
-        <span class="rule-name">{{ f.rule_id }} &mdash; {{ f.rule_name }}</span>
-        {% if f.reason %}<span class="reason">{{ f.reason }}</span>{% endif %}
-      </div>
-      <p class="explanation">{{ f.explanation }}</p>
-
-      {% if f.diff %}
-      <div class="diff" aria-label="Character-level difference">
-        <div class="diff-row">
-          <span class="diff-label">Required</span>
-          <code>{% for s in f.diff %}{% if s.op == "equal" %}{{ s.expected }}{% elif s.expected %}<del>{{ s.expected }}</del>{% endif %}{% endfor %}</code>
-        </div>
-        <div class="diff-row">
-          <span class="diff-label">On label</span>
-          <code>{% for s in f.diff %}{% if s.op == "equal" %}{{ s.actual }}{% elif s.actual %}<ins>{{ s.actual }}</ins>{% endif %}{% endfor %}</code>
-        </div>
-      </div>
-      {% elif f.expected is not none or f.actual is not none %}
-      <div class="evidence">
-        <div class="evidence-cell">
-          <span class="evidence-label">Expected</span>
-          <div class="evidence-value">{{ f.expected if f.expected is not none else "—" }}</div>
-        </div>
-        <div class="evidence-cell">
-          <span class="evidence-label">On the label</span>
-          <div class="evidence-value">{{ f.actual if f.actual is not none else "—" }}</div>
-        </div>
-      </div>
-      {% endif %}
-
-      <p class="citation">{{ f.citation }}</p>
-    </li>
-    {% endfor %}
-  </ol>
+  {% with findings = result.findings %}{% include "partials/findings.html" %}{% endwith %}
 </div>

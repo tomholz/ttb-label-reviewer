@@ -236,6 +236,60 @@ main, .site-header, .site-footer {
 
 .citation { color: var(--muted); font-size: 0.8rem; margin: 0.4rem 0 0; }
 
+/* --- Batch results --- */
+
+.batch-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  margin: 1rem 0;
+}
+
+/* Groups fill as rows stream in; an empty group stays hidden so the
+   page never shows a "Fail" heading with nothing under it. */
+.batch-group:has(.batch-rows:empty) { display: none; }
+.batch-group h3 { font-size: 1rem; margin: 1.25rem 0 0.4rem; }
+.group-hint { color: var(--muted); font-size: 0.8rem; font-weight: 400; }
+
+.batch-row {
+  border: 1px solid var(--line);
+  border-left-width: 5px;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  margin: 0.45rem 0;
+}
+.batch-row.outcome-pass         { border-left-color: var(--pass-line); }
+.batch-row.outcome-needs_review { border-left-color: var(--warn-line); }
+.batch-row.outcome-fail         { border-left-color: var(--fail-line); }
+.batch-row.batch-row-error      { border-left-color: var(--fail-line); }
+
+.batch-row summary {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  cursor: pointer;
+}
+.batch-row summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+
+.batch-app-id { font-weight: 600; overflow-wrap: anywhere; }
+.batch-row-counts { color: var(--muted); font-size: 0.85rem; }
+
+.batch-row-error {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.batch-error-message { color: var(--fail-ink); overflow-wrap: anywhere; }
+
+.badge-error { background: var(--fail-bg); color: var(--fail-ink); border-color: var(--fail-line); }
+
 /* --- Errors --- */
 
 .error-card {
