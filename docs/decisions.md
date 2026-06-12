@@ -97,11 +97,38 @@ manifest contract, the canonical-text-out-of-prompt constraint. Cutting
 features is cheap; cutting contracts is expensive — the contracts ship
 regardless.
 
-## D-10 — Cloud model API for the prototype; FedRAMP noted for production
+## D-10 — Cloud model API for the prototype, with a concrete federal transition story
 
 The deliverable requires a deployed, publicly testable URL, so a cloud
-vision-model API is acceptable for the prototype. The stakeholder
-firewall constraint (outbound ML endpoints blocked) is a *production*
-concern: a real deployment would use a FedRAMP-authorized endpoint
-(e.g., Azure OpenAI Government, AWS Bedrock GovCloud). This is a README
-paragraph, not a prototype engineering constraint.
+vision-model API is acceptable for the prototype. But the stakeholder
+constraints (firewall blocks outbound ML endpoints; FedRAMP'd Azure
+shop) get a designed-in transition story, not just a README mention.
+Three design rules, adopted from the first line of code:
+
+1. **Model client is a swappable adapter.** One module owns the vision
+   API; Anthropic API for the prototype, FedRAMP-authorized endpoint
+   (Claude via AWS Bedrock GovCloud, or Azure OpenAI Government on
+   TTB's own substrate) for production — a config change plus one
+   adapter, not a rewrite.
+2. **Single OCI container.** Fly.io deploys from a Dockerfile, so the
+   deployable artifact is already portable — the same image runs on
+   Azure Government, GovCloud ECS, or on-prem. Fly hosts the prototype
+   URL; it is not load-bearing in the architecture.
+3. **All static assets vendored — no CDN, no runtime outbound
+   dependencies except the model API.** Derived directly from the
+   firewall constraint that killed half the prior vendor's pilot.
+4. **Stateless, ephemeral processing.** Uploads exist only for the
+   duration of a review; nothing is retained. Keeps the PII /
+   records-retention surface near zero for a future ATO conversation.
+
+## D-11 — Stack: Python end to end (FastAPI + HTMX), deployed on Fly.io
+
+One language across the rule engine, eval harness, golden-label
+renderer (Pillow — spike-validated GO in spikes/label-renderer/),
+Claude SDK, and web layer. Server-rendered UI with HTMX (single
+vendored ~14KB file) and SSE for the streaming batch table; no SPA
+build chain. This is also the more government-deployable shape per
+D-10(3) — fewer moving parts, no CDN pull. Considered and rejected:
+Next.js/Vercel (splits the project across two languages or forces a
+TS renderer); FastAPI + React SPA (two build systems for a time-boxed
+prototype).
