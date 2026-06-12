@@ -24,7 +24,7 @@ class ApplicationRecord(BaseModel):
     abv_percent: float
     net_contents: str
     imported: bool = False
-    image_filenames: list[str]
+    image_filenames: list[str] = Field(min_length=1)
 
 
 class TriState(StrEnum):
@@ -35,7 +35,7 @@ class TriState(StrEnum):
 
 class ExtractedField(BaseModel):
     raw: str
-    confidence: float
+    confidence: float = Field(ge=0.0, le=1.0)
 
 
 class ExtractedWarning(BaseModel):
@@ -45,7 +45,7 @@ class ExtractedWarning(BaseModel):
     lead_in_bold: TriState = TriState.UNCERTAIN
     remainder_bold: TriState = TriState.UNCERTAIN
     separate_and_apart: TriState = TriState.UNCERTAIN
-    confidence: float
+    confidence: float = Field(ge=0.0, le=1.0)
 
 
 class ExtractionResult(BaseModel):

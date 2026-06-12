@@ -34,6 +34,10 @@ from .types import (
 RuleFn = Callable[[ApplicationRecord, ExtractionResult, EngineConfig], Finding]
 
 _LEAD_IN = re.compile(r"government\s+warning", re.IGNORECASE)
+# "alc" then "vol" in either order covers "45% Alc./Vol.", "ALC. 45% BY
+# VOL.", and "45% alcohol by volume"; "ABV" is deliberately not matched
+# (not a permitted abbreviation under 5.65(a)).
+_ABV_FORM = re.compile(r"alc.*vol|vol.*alc", re.IGNORECASE | re.DOTALL)
 _FLOAT_EPSILON = 1e-6
 
 
@@ -166,6 +170,22 @@ def ds3_alcohol_content(
     # "human judgment" (needs_review) and "clear mismatch" (fail).
     delta = abs(value - app.abv_percent)
     if delta < _FLOAT_EPSILON:
+        # Required form is "__% alcohol by volume" (abbreviations alc, %,
+        # /, vol permitted — 5.65(a)). A matching number without that
+        # language (bare "45%", "45% ABV") routes to needs_review, not
+        # fail: absent words in an extracted span may be extraction
+        # truncation rather than a label defect, while the matched number
+        # is robust evidence.
+        if not _ABV_FORM.search(field.raw):
+            return build(
+                Outcome.NEEDS_REVIEW,
+                "Label ABV matches the application, but the statement does "
+                'not appear to use the required "% alcohol by volume" form '
+                "(or a permitted abbreviation such as Alc./Vol.).",
+                reason=Reason.FORMAT,
+                expected=expected,
+                actual=field.raw,
+            )
         return build(
             Outcome.PASS,
             "Label ABV matches the application.",

@@ -94,6 +94,37 @@ def test_ds3_unparseable_statement_needs_review():
     assert f.reason is Reason.ILLEGIBLE
 
 
+@pytest.mark.parametrize("statement", ["45%", "45% ABV"])
+def test_ds3_matching_number_without_abv_form_needs_review(statement):
+    # Required form is "__% alcohol by volume" (or permitted
+    # abbreviations); a matching bare percentage routes to review, not
+    # pass — and not fail, since the missing words may be extraction
+    # truncation.
+    ext = make_extraction(alcohol_content=field(statement), proof=None)
+    f = finding(review(make_application(abv_percent=45.0), ext), "DS-3")
+    assert f.outcome is Outcome.NEEDS_REVIEW
+    assert f.reason is Reason.FORMAT
+
+
+@pytest.mark.parametrize(
+    "statement",
+    ["45% Alc./Vol.", "ALC. 45% BY VOL.", "45% alcohol by volume"],
+)
+def test_ds3_permitted_abv_forms_pass(statement):
+    ext = make_extraction(alcohol_content=field(statement), proof=None)
+    f = finding(review(make_application(abv_percent=45.0), ext), "DS-3")
+    assert f.outcome is Outcome.PASS
+
+
+def test_ds3_band_mismatch_outranks_form_problem():
+    # A bare percentage that is also numerically off fails on the
+    # mismatch; the form question is moot at that point.
+    ext = make_extraction(alcohol_content=field("45.4%"), proof=None)
+    f = finding(review(make_application(abv_percent=45.0), ext), "DS-3")
+    assert f.outcome is Outcome.FAIL
+    assert f.reason is Reason.MISMATCH
+
+
 # --- DS-4: net contents -----------------------------------------------------
 
 

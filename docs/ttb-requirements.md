@@ -102,7 +102,12 @@ unreadable" is `illegible`.
   - **Bands:** exact numeric match → `pass`; difference ≤ 0.3 pp →
     `needs_review` (reason `mismatch`); difference > 0.3 pp → `fail`.
   - Required form: "__% alcohol by volume"; permitted abbreviations:
-    `alc`, `%`, `/` for "by", `vol` (e.g., "45% Alc./Vol.").
+    `alc`, `%`, `/` for "by", `vol` (e.g., "45% Alc./Vol."). A statement
+    whose numeric value matches but lacks the alcohol-by-volume language
+    (a bare "45%", or "45% ABV" — `ABV` is not a permitted abbreviation)
+    → `needs_review` (reason `format`), not `fail`: the absent words may
+    be extraction truncation rather than a label defect, while the
+    matched number is robust evidence.
   - Proof (e.g., "90 Proof") is optional and may appear in addition to,
     never instead of, the ABV statement. See DS-8 for the proof
     cross-check.
