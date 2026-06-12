@@ -1,0 +1,31 @@
+[project]
+name = "ttb-label-reviewer"
+version = "0.1.0"
+description = "AI-powered alcohol label verification prototype: the AI extracts, the code decides."
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28",
+    "pytest>=8",
+    "ruff>=0.11",
+]
+
+[build-system]
+requires = ["uv_build>=0.7,<2"]
+build-backend = "uv_build"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+extend-exclude = ["spikes"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
