@@ -2,9 +2,7 @@
    per-rule counts for triage (the outcome model's "2 fail, 1 review,
    4 pass", not just the aggregate); expanding shows the same per-rule
    findings as a single review. #}
-{% set verdict_labels = {"pass": "Pass", "needs_review": "Needs review", "fail": "Fail"} %}
-{% set partial_verdict_labels = {"pass": "No issue found in checked rules", "needs_review": "Needs agent review", "fail": "Issue found"} %}
-{% set display_labels = partial_verdict_labels if result.coverage == "partial" else verdict_labels %}
+{% set display_labels = PARTIAL_VERDICT_LABELS if result.coverage == "partial" else VERDICT_LABELS %}
 <details class="batch-row outcome-{{ result.verdict }}">
   <summary>
     <span class="badge badge-{{ result.verdict }}">{{ display_labels[result.verdict] }}</span>

@@ -1,10 +1,6 @@
 {# Review result fragment (contracts.md §4): verdict banner, counts, then
    one finding per rule in checklist order (partials/findings.html). #}
-{% set verdict_labels = {"pass": "Pass", "needs_review": "Needs review", "fail": "Fail"} %}
-{% set partial_verdict_labels = {"pass": "No issue found in checked rules", "needs_review": "Needs agent review", "fail": "Issue found"} %}
-{% set display_labels = partial_verdict_labels if result.coverage == "partial" else verdict_labels %}
-{% set first_rule = result.findings[0].rule_id if result.findings else "" %}
-{% set beverage_label = "wine" if first_rule.startswith("WN-") else "malt beverage" if first_rule.startswith("MB-") else "distilled spirits" %}
+{% set display_labels = PARTIAL_VERDICT_LABELS if result.coverage == "partial" else VERDICT_LABELS %}
 {% set evaluated = result.counts.fail + result.counts.needs_review + result.counts.pass_ %}
 <div class="card results-card">
   <div class="result-meta">

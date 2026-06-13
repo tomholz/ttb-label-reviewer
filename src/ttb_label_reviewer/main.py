@@ -36,6 +36,26 @@ app = FastAPI(title="TTB Label Reviewer")
 # runtime outbound dependency is the model API.
 app.mount("/static", StaticFiles(directory=_PACKAGE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=_PACKAGE_DIR / "templates")
+# Verdict wording lives in one place (used by results.html and batch_row.html).
+# Partial-coverage results (wine/malt) drop the word "Pass" so a checked-rules
+# pass is never read as full compliance (memo §6).
+templates.env.globals["VERDICT_LABELS"] = {
+    "pass": "Pass",
+    "needs_review": "Needs review",
+    "fail": "Fail",
+}
+templates.env.globals["PARTIAL_VERDICT_LABELS"] = {
+    "pass": "No issue found in checked rules",
+    "needs_review": "Needs agent review",
+    "fail": "Issue found",
+}
+# Human-facing commodity label for the partial-coverage banner. Presentation
+# only — kept out of the engine's BeverageType (a UI concern, not a rule one).
+_BEVERAGE_LABELS = {
+    BeverageType.DISTILLED_SPIRITS: "distilled spirits",
+    BeverageType.WINE: "wine",
+    BeverageType.MALT_BEVERAGE: "malt beverage",
+}
 
 
 @lru_cache
@@ -217,7 +237,9 @@ def ui_review(
         extractor,
     )
     return templates.TemplateResponse(
-        request, "partials/results.html", {"result": result}
+        request,
+        "partials/results.html",
+        {"result": result, "beverage_label": _BEVERAGE_LABELS[beverage_type]},
     )
 
 
