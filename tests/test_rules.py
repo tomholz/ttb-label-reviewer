@@ -166,6 +166,127 @@ def test_ds4_unparseable_and_different_needs_review():
     assert f.reason is Reason.MISMATCH
 
 
+# --- Wine/malt shared rules and alcohol branches ----------------------------
+
+
+def test_wine_rules_are_registered_with_partial_coverage():
+    app = make_application(
+        beverage_type="wine",
+        class_type="Table Wine",
+        abv_percent=12.0,
+        imported=False,
+    )
+    ext = make_extraction(
+        class_type=field("Table Wine"),
+        alcohol_content=None,
+        proof=None,
+    )
+    result = review(app, ext)
+    assert result.coverage == "partial"
+    assert [f.rule_id for f in result.findings] == [
+        "WN-1",
+        "WN-2",
+        "WN-3",
+        "WN-4",
+        "WN-5a",
+        "WN-5b",
+        "WN-5c",
+        "WN-5d",
+        "WN-6",
+        "WN-7",
+        "WN-SCOPE",
+    ]
+    assert finding(result, "WN-3").outcome is Outcome.PASS
+    assert finding(result, "WN-SCOPE").outcome is Outcome.NOT_EVALUATED
+
+
+@pytest.mark.parametrize(
+    ("app_abv", "class_type", "statement", "outcome", "reason"),
+    [
+        (14.1, "Red Wine", None, Outcome.FAIL, Reason.MISSING),
+        (14.0, "Table Wine", None, Outcome.PASS, None),
+        (14.0, "Light Wine", None, Outcome.PASS, None),
+        (14.0, "Red Wine", None, Outcome.NEEDS_REVIEW, Reason.MISSING),
+        (14.0, "Red Wine", "14% Alc./Vol.", Outcome.PASS, None),
+        # Number matches but the prescribed wording is absent → needs_review/
+        # format, same as DS-3 (4.36 requires the form just as 5.65(a) does).
+        (14.0, "Red Wine", "14%", Outcome.NEEDS_REVIEW, Reason.FORMAT),
+        (14.0, "Red Wine", "14% ABV", Outcome.NEEDS_REVIEW, Reason.FORMAT),
+        (14.0, "Red Wine", "15.5% Alc./Vol.", Outcome.NEEDS_REVIEW, Reason.MISMATCH),
+        (14.0, "Red Wine", "15.6% Alc./Vol.", Outcome.FAIL, Reason.MISMATCH),
+        (14.1, "Red Wine", "15.1% Alc./Vol.", Outcome.NEEDS_REVIEW, Reason.MISMATCH),
+        (14.1, "Red Wine", "15.2% Alc./Vol.", Outcome.FAIL, Reason.MISMATCH),
+    ],
+)
+def test_wn3_alcohol_content_branches(app_abv, class_type, statement, outcome, reason):
+    app = make_application(
+        beverage_type="wine",
+        class_type=class_type,
+        abv_percent=app_abv,
+    )
+    ext = make_extraction(
+        class_type=field(class_type),
+        alcohol_content=None if statement is None else field(statement),
+        proof=None,
+    )
+    f = finding(review(app, ext), "WN-3")
+    assert f.outcome is outcome
+    assert f.reason is reason
+
+
+@pytest.mark.parametrize(
+    ("statement", "outcome", "reason"),
+    [
+        (None, Outcome.NEEDS_REVIEW, Reason.MISSING),
+        ("5.0% Alc./Vol.", Outcome.PASS, None),
+        # Number matches but the prescribed 7.65(b) wording is absent.
+        ("5.0%", Outcome.NEEDS_REVIEW, Reason.FORMAT),
+        ("5.3% Alc./Vol.", Outcome.NEEDS_REVIEW, Reason.MISMATCH),
+        ("5.4% Alc./Vol.", Outcome.FAIL, Reason.MISMATCH),
+    ],
+)
+def test_mb3_alcohol_content_branches(statement, outcome, reason):
+    app = make_application(
+        beverage_type="malt_beverage",
+        class_type="Lager",
+        abv_percent=5.0,
+    )
+    ext = make_extraction(
+        class_type=field("Lager"),
+        alcohol_content=None if statement is None else field(statement),
+        proof=None,
+    )
+    f = finding(review(app, ext), "MB-3")
+    assert f.outcome is outcome
+    assert f.reason is reason
+
+
+def test_malt_scope_marker_is_aggregation_neutral():
+    app = make_application(
+        beverage_type="malt_beverage",
+        class_type="Lager",
+        abv_percent=5.0,
+    )
+    ext = make_extraction(
+        class_type=field("Lager"),
+        alcohol_content=field("5.0% Alc./Vol."),
+        proof=None,
+    )
+    result = review(app, ext)
+    assert result.coverage == "partial"
+    assert finding(result, "MB-SCOPE").outcome is Outcome.NOT_EVALUATED
+    assert result.counts.not_evaluated == 1
+    assert result.verdict is Outcome.PASS
+
+
+def test_distilled_spirits_scope_marker_is_aggregation_neutral():
+    result = review(make_application(), make_extraction())
+    assert result.coverage == "full"
+    assert finding(result, "DS-SCOPE").outcome is Outcome.NOT_EVALUATED
+    assert result.counts.not_evaluated == 1
+    assert result.verdict is Outcome.PASS
+
+
 # --- DS-5a: warning text verbatim -------------------------------------------
 
 

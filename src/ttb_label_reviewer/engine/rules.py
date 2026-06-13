@@ -22,6 +22,7 @@ from .normalize import normalize_fuzzy, normalize_warning
 from .parsers import parse_abv_statement, parse_net_contents, parse_proof
 from .types import (
     ApplicationRecord,
+    BeverageType,
     EngineConfig,
     ExtractedField,
     ExtractionResult,
@@ -216,7 +217,15 @@ def ds4_net_contents(
     app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
 ) -> Finding:
     build = _builder("DS-4", "Net contents", "27 CFR 5.63(b)(2), 5.70")
-    field = ext.net_contents
+    return _net_contents_check(build, app.net_contents, ext.net_contents, config)
+
+
+def _net_contents_check(
+    build,
+    app_value: str,
+    field: ExtractedField | None,
+    config: EngineConfig,
+) -> Finding:
     if field is None:
         # Never fail on missing: 5.63(b)(2) permits net contents blown,
         # embossed, or molded into the container, which a label-image-only
@@ -227,11 +236,11 @@ def ds4_net_contents(
             "blown, embossed, or molded into the container itself, which "
             "this review cannot see.",
             reason=Reason.MISSING,
-            expected=app.net_contents,
+            expected=app_value,
         )
     if field.confidence < config.illegibility_threshold:
-        return _illegible(build, "Net contents", field, app.net_contents)
-    expected_parsed = parse_net_contents(app.net_contents)
+        return _illegible(build, "Net contents", field, app_value)
+    expected_parsed = parse_net_contents(app_value)
     actual_parsed = parse_net_contents(field.raw)
     if expected_parsed is not None and actual_parsed is not None:
         (exp_value, exp_unit), (act_value, act_unit) = expected_parsed, actual_parsed
@@ -239,23 +248,23 @@ def ds4_net_contents(
             return build(
                 Outcome.PASS,
                 "Net contents matches the application.",
-                expected=app.net_contents,
+                expected=app_value,
                 actual=field.raw,
             )
         return build(
             Outcome.FAIL,
             "Net contents disagrees with the application.",
             reason=Reason.MISMATCH,
-            expected=app.net_contents,
+            expected=app_value,
             actual=field.raw,
         )
     # One side didn't parse: fall back to fuzzy string comparison and
     # never fail on a comparison the parser didn't understand.
-    if normalize_fuzzy(field.raw) == normalize_fuzzy(app.net_contents):
+    if normalize_fuzzy(field.raw) == normalize_fuzzy(app_value):
         return build(
             Outcome.PASS,
             "Net contents matches the application.",
-            expected=app.net_contents,
+            expected=app_value,
             actual=field.raw,
         )
     return build(
@@ -263,7 +272,7 @@ def ds4_net_contents(
         "Net contents could not be parsed for numeric comparison and the "
         "strings differ — needs a human look.",
         reason=Reason.MISMATCH,
-        expected=app.net_contents,
+        expected=app_value,
         actual=field.raw,
     )
 
@@ -272,6 +281,10 @@ def ds5a_warning_text(
     app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
 ) -> Finding:
     build = _builder("DS-5a", "Government warning text", "27 CFR 16.21")
+    return _warning_text_check(build, ext, config)
+
+
+def _warning_text_check(build, ext: ExtractionResult, config: EngineConfig) -> Finding:
     canonical = normalize_warning(CANONICAL_WARNING)
     warning = ext.government_warning
     if warning is None:
@@ -314,6 +327,10 @@ def ds5b_lead_in_caps(
     app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
 ) -> Finding:
     build = _builder("DS-5b", "GOVERNMENT WARNING capitalization", "27 CFR 16.22(a)(2)")
+    return _lead_in_caps_check(build, ext, config)
+
+
+def _lead_in_caps_check(build, ext: ExtractionResult, config: EngineConfig) -> Finding:
     warning = ext.government_warning
     if warning is None:
         return build(
@@ -365,6 +382,12 @@ def ds5c_bold(
     build = _builder(
         "DS-5c", "GOVERNMENT WARNING bold formatting", "27 CFR 16.22(a)(2)"
     )
+    return _warning_bold_check(build, ext, config)
+
+
+def _warning_bold_check(build, ext: ExtractionResult, config: EngineConfig) -> Finding:
+    # visual match_mode: outcomes restricted to pass/needs_review by
+    # construction — no path to fail exists in this function.
     expected = '"GOVERNMENT WARNING" in bold type; remainder not bold'
     warning = ext.government_warning
     if warning is None:
@@ -419,6 +442,13 @@ def ds5d_placement(
     build = _builder(
         "DS-5d", "Warning placement and layout", "27 CFR 16.21, 16.22(a)(3)"
     )
+    return _warning_placement_check(build, ext, config)
+
+
+def _warning_placement_check(
+    build, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    # visual match_mode: pass/needs_review only, same construction as DS-5c.
     expected = "warning separate and apart from all other information"
     warning = ext.government_warning
     if warning is None:
@@ -562,7 +592,354 @@ def ds8_proof_abv(
     )
 
 
-ALL_RULES: list[RuleFn] = [
+def _abv_band_check(
+    build,
+    app: ApplicationRecord,
+    field: ExtractedField,
+    config: EngineConfig,
+    *,
+    tolerance: float,
+    category_label: str,
+) -> Finding:
+    expected = f"{app.abv_percent:g}% alcohol by volume"
+    if field.confidence < config.illegibility_threshold:
+        return _illegible(build, "Alcohol content statement", field, expected)
+    value = parse_abv_statement(field.raw)
+    if value is None:
+        return build(
+            Outcome.NEEDS_REVIEW,
+            "An alcohol content statement was found but no percentage could "
+            "be parsed from it.",
+            reason=Reason.ILLEGIBLE,
+            expected=expected,
+            actual=field.raw,
+        )
+    delta = abs(value - app.abv_percent)
+    if delta < _FLOAT_EPSILON:
+        # Same form check as DS-3: the number matches, but if the statement
+        # lacks the prescribed "% alcohol by volume" wording (a bare "12%",
+        # or "12% ABV"), route to needs_review/format rather than pass. The
+        # wording is required for wine (4.36) and malt (7.65(b)) just as for
+        # distilled spirits (5.65(a)), and absent words may be extraction
+        # truncation rather than a label defect — so a human look, not a fail.
+        if not _ABV_FORM.search(field.raw):
+            return build(
+                Outcome.NEEDS_REVIEW,
+                f"Label ABV matches the application for this {category_label}, "
+                "but the statement does not appear to use the required "
+                '"% alcohol by volume" form (or a permitted abbreviation such '
+                "as Alc./Vol.).",
+                reason=Reason.FORMAT,
+                expected=expected,
+                actual=field.raw,
+            )
+        return build(
+            Outcome.PASS,
+            f"Label ABV matches the application for this {category_label}.",
+            expected=expected,
+            actual=field.raw,
+        )
+    if delta <= tolerance + _FLOAT_EPSILON:
+        return build(
+            Outcome.NEEDS_REVIEW,
+            f"Label ABV ({value:g}%) differs from the application "
+            f"({app.abv_percent:g}%) by {delta:.1f} points — within "
+            f"{tolerance:g}, so it gets a human look rather than an automatic fail.",
+            reason=Reason.MISMATCH,
+            expected=expected,
+            actual=field.raw,
+        )
+    return build(
+        Outcome.FAIL,
+        f"Label ABV ({value:g}%) differs from the application "
+        f"({app.abv_percent:g}%) by {delta:.1f} points.",
+        reason=Reason.MISMATCH,
+        expected=expected,
+        actual=field.raw,
+    )
+
+
+def _has_qualifying_wine_designation(class_type: str) -> bool:
+    normalized = normalize_fuzzy(class_type)
+    return any(
+        normalize_fuzzy(designation) in normalized
+        for designation in ("table wine", "light wine")
+    )
+
+
+def wn1_brand_name(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("WN-1", "Brand name", "27 CFR 4.33")
+    return _fuzzy_consistency(
+        build, "Brand name", app.brand_name, ext.brand_name, config
+    )
+
+
+def wn2_class_type(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("WN-2", "Class/type designation", "27 CFR 4.34")
+    return _fuzzy_consistency(
+        build, "Class/type designation", app.class_type, ext.class_type, config
+    )
+
+
+def wn3_alcohol_content(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("WN-3", "Alcohol content", "27 CFR 4.36")
+    field = ext.alcohol_content
+    expected = f"{app.abv_percent:g}% alcohol by volume"
+    if field is None:
+        if app.abv_percent > 14.0 + _FLOAT_EPSILON:
+            return build(
+                Outcome.FAIL,
+                "No alcohol content statement found; wine above 14% ABV must "
+                "state alcohol content.",
+                reason=Reason.MISSING,
+                expected=expected,
+            )
+        if _has_qualifying_wine_designation(app.class_type):
+            return build(
+                Outcome.PASS,
+                "No alcohol content statement found, but the application class "
+                "type uses a table/light wine designation for wine at or below "
+                "14% ABV.",
+                expected=expected,
+            )
+        return build(
+            Outcome.NEEDS_REVIEW,
+            "No alcohol content statement found; wine at or below 14% ABV may "
+            "omit the statement only when a qualifying designation applies.",
+            reason=Reason.MISSING,
+            expected=expected,
+        )
+    tolerance = 1.0 if app.abv_percent > 14.0 + _FLOAT_EPSILON else 1.5
+    return _abv_band_check(
+        build,
+        app,
+        field,
+        config,
+        tolerance=tolerance,
+        category_label="wine",
+    )
+
+
+def wn4_net_contents(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("WN-4", "Net contents", "27 CFR 4.37")
+    return _net_contents_check(build, app.net_contents, ext.net_contents, config)
+
+
+def wn5a_warning_text(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("WN-5a", "Government warning text", "27 CFR 16.21")
+    return _warning_text_check(build, ext, config)
+
+
+def wn5b_lead_in_caps(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("WN-5b", "GOVERNMENT WARNING capitalization", "27 CFR 16.22(a)(2)")
+    return _lead_in_caps_check(build, ext, config)
+
+
+def wn5c_bold(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder(
+        "WN-5c", "GOVERNMENT WARNING bold formatting", "27 CFR 16.22(a)(2)"
+    )
+    return _warning_bold_check(build, ext, config)
+
+
+def wn5d_placement(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder(
+        "WN-5d", "Warning placement and layout", "27 CFR 16.21, 16.22(a)(3)"
+    )
+    return _warning_placement_check(build, ext, config)
+
+
+def wn6_name_address(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("WN-6", "Name and address", "27 CFR 4.35")
+    return _presence(build, "Name and address statement", ext.name_address, config)
+
+
+def wn7_country_of_origin(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("WN-7", "Country of origin", "19 CFR 102, 19 CFR 134")
+    if not app.imported:
+        return build(
+            Outcome.NOT_APPLICABLE,
+            "Product is not imported; no country-of-origin statement is required.",
+        )
+    return _presence(
+        build, "Country-of-origin statement", ext.country_of_origin, config
+    )
+
+
+def wn_scope(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder(
+        "WN-SCOPE",
+        "Wine checks outside automated scope",
+        "27 CFR 4.23, 4.24, 4.25, 4.27, 4.32(e), 4.72",
+    )
+    return build(
+        Outcome.NOT_EVALUATED,
+        "This prototype does not evaluate wine appellation, vintage, varietal, "
+        "semi-generic/geographic-name, standards-of-fill, or conditional "
+        "ingredient/declaration requirements because they require taxonomy, "
+        "formula, ingredient, or container facts outside the extracted label fields.",
+    )
+
+
+def mb1_brand_name(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("MB-1", "Brand name", "27 CFR 7.64")
+    return _fuzzy_consistency(
+        build, "Brand name", app.brand_name, ext.brand_name, config
+    )
+
+
+def mb2_class_type(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("MB-2", "Class/type designation", "27 CFR Part 7 Subpart I")
+    return _fuzzy_consistency(
+        build, "Class/type designation", app.class_type, ext.class_type, config
+    )
+
+
+def mb3_alcohol_content(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("MB-3", "Alcohol content", "27 CFR 7.65")
+    field = ext.alcohol_content
+    expected = f"{app.abv_percent:g}% alcohol by volume"
+    if field is None:
+        return build(
+            Outcome.NEEDS_REVIEW,
+            "No alcohol content statement found; malt beverage alcohol content "
+            "is generally optional, with exceptions this label-only review cannot "
+            "determine.",
+            reason=Reason.MISSING,
+            expected=expected,
+        )
+    return _abv_band_check(
+        build,
+        app,
+        field,
+        config,
+        tolerance=0.3,
+        category_label="malt beverage",
+    )
+
+
+def mb4_net_contents(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("MB-4", "Net contents", "27 CFR 7.70")
+    return _net_contents_check(build, app.net_contents, ext.net_contents, config)
+
+
+def mb5a_warning_text(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("MB-5a", "Government warning text", "27 CFR 16.21")
+    return _warning_text_check(build, ext, config)
+
+
+def mb5b_lead_in_caps(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("MB-5b", "GOVERNMENT WARNING capitalization", "27 CFR 16.22(a)(2)")
+    return _lead_in_caps_check(build, ext, config)
+
+
+def mb5c_bold(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder(
+        "MB-5c", "GOVERNMENT WARNING bold formatting", "27 CFR 16.22(a)(2)"
+    )
+    return _warning_bold_check(build, ext, config)
+
+
+def mb5d_placement(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder(
+        "MB-5d", "Warning placement and layout", "27 CFR 16.21, 16.22(a)(3)"
+    )
+    return _warning_placement_check(build, ext, config)
+
+
+def mb6_name_address(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("MB-6", "Name and address", "27 CFR 7.66-7.68")
+    return _presence(build, "Name and address statement", ext.name_address, config)
+
+
+def mb7_country_of_origin(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder("MB-7", "Country of origin", "19 CFR 102, 19 CFR 134")
+    if not app.imported:
+        return build(
+            Outcome.NOT_APPLICABLE,
+            "Product is not imported; no country-of-origin statement is required.",
+        )
+    return _presence(
+        build, "Country-of-origin statement", ext.country_of_origin, config
+    )
+
+
+def mb_scope(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder(
+        "MB-SCOPE",
+        "Malt beverage checks outside automated scope",
+        "27 CFR 7.63(b), 7.65(a), 7.65(b)(3)-(5)",
+    )
+    return build(
+        Outcome.NOT_EVALUATED,
+        "This prototype does not evaluate non-alcoholic, low-alcohol, alcohol-free, "
+        "or added-flavor alcohol-content triggers; conditional ingredient/declaration "
+        "requirements; or standards-of-fill questions because they require lab, "
+        "formula, ingredient, or container facts outside the extracted label fields.",
+    )
+
+
+def ds_scope(
+    app: ApplicationRecord, ext: ExtractionResult, config: EngineConfig
+) -> Finding:
+    build = _builder(
+        "DS-SCOPE",
+        "Distilled spirits checks outside automated scope",
+        "27 CFR 5.63(a), 5.70",
+    )
+    return build(
+        Outcome.NOT_EVALUATED,
+        "This prototype does not evaluate same-field-of-vision, type-size, or "
+        "standards-of-fill requirements because they require layout, measurement, "
+        "or container facts outside the extracted label fields.",
+    )
+
+
+DS_RULES: list[RuleFn] = [
     ds1_brand_name,
     ds2_class_type,
     ds3_alcohol_content,
@@ -574,4 +951,39 @@ ALL_RULES: list[RuleFn] = [
     ds6_name_address,
     ds7_country_of_origin,
     ds8_proof_abv,
+    ds_scope,
 ]
+
+WINE_RULES: list[RuleFn] = [
+    wn1_brand_name,
+    wn2_class_type,
+    wn3_alcohol_content,
+    wn4_net_contents,
+    wn5a_warning_text,
+    wn5b_lead_in_caps,
+    wn5c_bold,
+    wn5d_placement,
+    wn6_name_address,
+    wn7_country_of_origin,
+    wn_scope,
+]
+
+MALT_RULES: list[RuleFn] = [
+    mb1_brand_name,
+    mb2_class_type,
+    mb3_alcohol_content,
+    mb4_net_contents,
+    mb5a_warning_text,
+    mb5b_lead_in_caps,
+    mb5c_bold,
+    mb5d_placement,
+    mb6_name_address,
+    mb7_country_of_origin,
+    mb_scope,
+]
+
+RULES_BY_TYPE: dict[BeverageType, list[RuleFn]] = {
+    BeverageType.DISTILLED_SPIRITS: DS_RULES,
+    BeverageType.WINE: WINE_RULES,
+    BeverageType.MALT_BEVERAGE: MALT_RULES,
+}

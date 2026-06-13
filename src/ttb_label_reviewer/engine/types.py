@@ -10,7 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class BeverageType(StrEnum):
     DISTILLED_SPIRITS = "distilled_spirits"
-    # wine / malt_beverage reserved (stubs in docs/ttb-requirements.md)
+    WINE = "wine"
+    MALT_BEVERAGE = "malt_beverage"
 
 
 class ApplicationRecord(BaseModel):
@@ -68,6 +69,7 @@ class Outcome(StrEnum):
     FAIL = "fail"
     NEEDS_REVIEW = "needs_review"
     NOT_APPLICABLE = "not_applicable"
+    NOT_EVALUATED = "not_evaluated"
 
 
 class Reason(StrEnum):
@@ -102,6 +104,7 @@ class Counts(BaseModel):
     needs_review: int = 0
     pass_: int = Field(0, alias="pass")
     not_applicable: int = 0
+    not_evaluated: int = 0
 
 
 class ReviewResult(BaseModel):
@@ -110,6 +113,7 @@ class ReviewResult(BaseModel):
     application_id: str
     verdict: Outcome
     counts: Counts
+    coverage: Literal["full", "partial"]
     findings: list[Finding]
 
 

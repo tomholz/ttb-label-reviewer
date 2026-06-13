@@ -3,17 +3,20 @@ not_applicable excluded from aggregation but reported."""
 
 from helpers import field, finding, make_application, make_extraction
 
-from ttb_label_reviewer.engine import Outcome, review
+import ttb_label_reviewer.engine.engine as engine_module
+from ttb_label_reviewer.engine import Finding, Outcome, review
 
 
 def test_compliant_label_set_passes():
     result = review(make_application(), make_extraction())
     assert result.verdict is Outcome.PASS
+    assert result.coverage == "full"
     assert result.counts.fail == 0
     assert result.counts.needs_review == 0
     assert result.counts.pass_ == 10
     assert result.counts.not_applicable == 1  # DS-7, not imported
-    assert len(result.findings) == 11
+    assert result.counts.not_evaluated == 1  # DS-SCOPE
+    assert len(result.findings) == 12
 
 
 def test_verdict_is_worst_finding():
@@ -42,6 +45,47 @@ def test_not_applicable_excluded_from_aggregation():
     assert result.verdict is Outcome.PASS
 
 
+def test_not_evaluated_excluded_from_aggregation(monkeypatch):
+    def not_evaluated_rule(application, extraction, config):
+        return Finding(
+            rule_id="TEST-SCOPE",
+            rule_name="Scope marker",
+            outcome=Outcome.NOT_EVALUATED,
+            citation="Test citation",
+            explanation="This rule is outside automated review scope.",
+        )
+
+    monkeypatch.setitem(
+        engine_module.RULES_BY_TYPE,
+        make_application().beverage_type,
+        [not_evaluated_rule],
+    )
+
+    result = engine_module.review(make_application(), make_extraction())
+    assert result.verdict is Outcome.PASS
+    assert result.counts.not_evaluated == 1
+    assert result.counts.pass_ == 0
+
+
+def test_review_uses_rules_for_application_beverage_type(monkeypatch):
+    def wine_rule(application, extraction, config):
+        return Finding(
+            rule_id="WN-TEST",
+            rule_name="Wine dispatch marker",
+            outcome=Outcome.NEEDS_REVIEW,
+            citation="Test citation",
+            explanation="Wine rule selected.",
+        )
+
+    app = make_application(beverage_type="wine")
+    monkeypatch.setitem(engine_module.RULES_BY_TYPE, app.beverage_type, [wine_rule])
+
+    result = engine_module.review(app, make_extraction())
+    assert result.coverage == "partial"
+    assert result.verdict is Outcome.NEEDS_REVIEW
+    assert [finding.rule_id for finding in result.findings] == ["WN-TEST"]
+
+
 def test_counts_cover_all_rules():
     result = review(make_application(), make_extraction())
     total = (
@@ -49,8 +93,9 @@ def test_counts_cover_all_rules():
         + result.counts.needs_review
         + result.counts.pass_
         + result.counts.not_applicable
+        + result.counts.not_evaluated
     )
-    assert total == len(result.findings) == 11
+    assert total == len(result.findings) == 12
 
 
 def test_application_id_echoed():
@@ -64,6 +109,7 @@ def test_counts_serialize_with_pass_key():
     dumped = result.model_dump()
     assert dumped["counts"]["pass"] == 10
     assert "pass_" not in dumped["counts"]
+    assert dumped["counts"]["not_evaluated"] == 1
 
 
 def test_evaluated_findings_carry_evidence():
@@ -71,16 +117,20 @@ def test_evaluated_findings_carry_evidence():
     # passes — a pass the agent can eyeball beats a green dot.
     result = review(make_application(), make_extraction())
     for f in result.findings:
-        if f.outcome is not Outcome.NOT_APPLICABLE:
+        if f.outcome not in (Outcome.NOT_APPLICABLE, Outcome.NOT_EVALUATED):
             assert f.expected is not None
             assert f.citation
             assert f.explanation
 
 
-def test_reason_is_null_on_pass_and_not_applicable():
+def test_reason_is_null_on_pass_and_unevaluated_outcomes():
     result = review(make_application(), make_extraction())
     for f in result.findings:
-        if f.outcome in (Outcome.PASS, Outcome.NOT_APPLICABLE):
+        if f.outcome in (
+            Outcome.PASS,
+            Outcome.NOT_APPLICABLE,
+            Outcome.NOT_EVALUATED,
+        ):
             assert f.reason is None
 
 

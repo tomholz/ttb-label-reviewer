@@ -126,6 +126,11 @@ deliberate script with a committed scoreboard, not a blocking CI gate
 | 2026-06-11 | claude-haiku-4-5-20251001 | `6886dc45365a` | v1 `464fabaa2311` | 172/176 (97.7%) | 14/16 | 4.0 s |
 | 2026-06-11 | claude-haiku-4-5-20251001 | `6886dc45365a` | v1 `464fabaa2311` | 148/176 (84.1%) | 11/16 | 4.2 s |
 
+- Current golden manifest v2 `0f411f08352d` adds one DS-SCOPE
+  `not_evaluated` row per case. That changes the deterministic manifest
+  denominator to 192 reported rule rows: the same 176 extraction-dependent
+  DS outcomes measured above, plus 16 extraction-independent scope markers.
+  The live eval was not rerun for this metadata-only scope row.
 - **Model decision: the default stays `claude-opus-4-8`** (perfect
   score, ~5.7 s warm ≈ the D-3 budget). Sonnet matched it with no
   latency win. The two Haiku rows are *the same configuration run

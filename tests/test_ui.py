@@ -102,8 +102,8 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
     assert response.status_code == 200
     page = response.text
     assert "verdict-pass" in page
-    # Counts line: 11 checks, 10 evaluated, DS-7 n/a (not imported).
-    assert "11 checks: 10 evaluated" in page
+    # Counts line: 12 checks, 10 evaluated, DS-7 n/a, DS-SCOPE not evaluated.
+    assert "12 checks: 10 evaluated" in page
     assert "1 not applicable" in page
     # Evidence is the interface (D-8): expected/actual visible on passes.
     assert page.count("OLD TOM DISTILLERY") >= 2
@@ -121,6 +121,7 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
         "DS-6",
         "DS-7",
         "DS-8",
+        "DS-SCOPE",
     ):
         assert rule_id in page
 

@@ -104,7 +104,15 @@ def _case(expected: dict) -> GoldenCase:
 
 def test_omitted_rule_means_expected_pass():
     result = review(make_application(), make_extraction())
-    scores = score_case(_case({"DS-7": {"outcome": "not_applicable"}}), result)
+    scores = score_case(
+        _case(
+            {
+                "DS-7": {"outcome": "not_applicable"},
+                "DS-SCOPE": {"outcome": "not_evaluated"},
+            }
+        ),
+        result,
+    )
     by_id = {s.rule_id: s for s in scores}
     assert by_id["DS-1"].expected_outcome is Outcome.PASS
     assert all(s.matched for s in scores)
@@ -112,7 +120,15 @@ def test_omitted_rule_means_expected_pass():
 
 def test_outcome_mismatch_detected():
     result = review(make_application(), make_extraction(government_warning=None))
-    scores = score_case(_case({"DS-7": {"outcome": "not_applicable"}}), result)
+    scores = score_case(
+        _case(
+            {
+                "DS-7": {"outcome": "not_applicable"},
+                "DS-SCOPE": {"outcome": "not_evaluated"},
+            }
+        ),
+        result,
+    )
     by_id = {s.rule_id: s for s in scores}
     assert not by_id["DS-5a"].matched
     assert by_id["DS-5a"].actual_outcome is Outcome.FAIL
@@ -141,6 +157,7 @@ def test_unpinned_reason_matches_any():
             "DS-5c": {"outcome": "needs_review", "reason": "missing"},
             "DS-5d": {"outcome": "needs_review", "reason": "missing"},
             "DS-7": {"outcome": "not_applicable"},
+            "DS-SCOPE": {"outcome": "not_evaluated"},
         }
     )
     assert all(s.matched for s in score_case(case, result))

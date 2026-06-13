@@ -5,7 +5,7 @@ import pytest
 from helpers import make_application, warning
 from pydantic import ValidationError
 
-from ttb_label_reviewer.engine import ExtractedField
+from ttb_label_reviewer.engine import BeverageType, ExtractedField
 
 
 def test_image_filenames_must_be_nonempty():
@@ -33,3 +33,15 @@ def test_field_confidence_in_range_accepted(confidence):
 def test_warning_confidence_out_of_range_rejected():
     with pytest.raises(ValidationError):
         warning(confidence=3.0)
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("distilled_spirits", BeverageType.DISTILLED_SPIRITS),
+        ("wine", BeverageType.WINE),
+        ("malt_beverage", BeverageType.MALT_BEVERAGE),
+    ],
+)
+def test_beverage_type_values(raw, expected):
+    assert make_application(beverage_type=raw).beverage_type is expected

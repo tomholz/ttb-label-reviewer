@@ -1,12 +1,13 @@
 """Run every rule and aggregate per the outcome model: verdict is the
-worst evaluated outcome (fail > needs_review > pass); not_applicable is
-reported for UI completeness but excluded from aggregation."""
+worst evaluated outcome (fail > needs_review > pass); not_applicable and
+not_evaluated are reported for UI completeness but excluded from aggregation."""
 
 from collections import Counter
 
-from .rules import ALL_RULES
+from .rules import RULES_BY_TYPE
 from .types import (
     ApplicationRecord,
+    BeverageType,
     Counts,
     EngineConfig,
     ExtractionResult,
@@ -23,11 +24,12 @@ def review(
     config: EngineConfig | None = None,
 ) -> ReviewResult:
     config = config or EngineConfig()
-    findings = [rule(application, extraction, config) for rule in ALL_RULES]
+    rules = RULES_BY_TYPE[application.beverage_type]
+    findings = [rule(application, extraction, config) for rule in rules]
     tally = Counter(finding.outcome for finding in findings)
     verdict = Outcome.PASS
     for finding in findings:
-        if finding.outcome is Outcome.NOT_APPLICABLE:
+        if finding.outcome in (Outcome.NOT_APPLICABLE, Outcome.NOT_EVALUATED):
             continue
         if _SEVERITY[finding.outcome] > _SEVERITY[verdict]:
             verdict = finding.outcome
@@ -39,6 +41,12 @@ def review(
             needs_review=tally[Outcome.NEEDS_REVIEW],
             pass_=tally[Outcome.PASS],
             not_applicable=tally[Outcome.NOT_APPLICABLE],
+            not_evaluated=tally[Outcome.NOT_EVALUATED],
+        ),
+        coverage=(
+            "full"
+            if application.beverage_type is BeverageType.DISTILLED_SPIRITS
+            else "partial"
         ),
         findings=findings,
     )

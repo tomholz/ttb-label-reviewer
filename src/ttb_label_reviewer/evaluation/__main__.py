@@ -28,8 +28,8 @@ from pathlib import Path
 
 import anthropic
 
-from ..engine import EngineConfig, ExtractionResult, Outcome, review
-from ..engine.rules import ALL_RULES
+from ..engine import BeverageType, EngineConfig, ExtractionResult, Outcome, review
+from ..engine.rules import RULES_BY_TYPE
 from ..extraction import (
     DEFAULT_MODEL,
     AnthropicExtractor,
@@ -177,7 +177,7 @@ def main() -> None:
         if "error" in report:
             # An errored case scores zero across the board rather than
             # vanishing from the denominator.
-            rule_total += len(ALL_RULES)
+            rule_total += len(RULES_BY_TYPE[BeverageType.DISTILLED_SPIRITS])
             print(f"{report['case_id']:<28} ERROR  {report['error']}")
             continue
         rule_total += report["total"]

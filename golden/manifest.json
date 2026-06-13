@@ -1,5 +1,5 @@
 {
-  "version": "1",
+  "version": "2",
   "cases": [
     {
       "case_id": "compliant",
@@ -19,6 +19,9 @@
       "expected": {
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -44,6 +47,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -69,6 +75,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -94,6 +103,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -115,6 +127,9 @@
       "expected": {
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -137,6 +152,9 @@
       "expected": {
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -174,6 +192,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -199,6 +220,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -227,6 +251,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -255,6 +282,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -280,6 +310,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -305,6 +338,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -334,6 +370,9 @@
         },
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -352,7 +391,11 @@
           "imported-with-origin.png"
         ]
       },
-      "expected": {}
+      "expected": {
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
+        }
+      }
     },
     {
       "case_id": "imported-missing-origin",
@@ -373,6 +416,9 @@
         "DS-7": {
           "outcome": "fail",
           "reason": "missing"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     },
@@ -394,6 +440,9 @@
       "expected": {
         "DS-7": {
           "outcome": "not_applicable"
+        },
+        "DS-SCOPE": {
+          "outcome": "not_evaluated"
         }
       }
     }

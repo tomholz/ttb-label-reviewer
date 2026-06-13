@@ -36,7 +36,7 @@ from ttb_label_reviewer.engine.canonical import CANONICAL_WARNING
 from ttb_label_reviewer.engine.normalize import normalize_warning
 
 OUT_DIR = Path(__file__).parent
-MANIFEST_VERSION = "1"
+MANIFEST_VERSION = "2"
 
 FONT_DIR = "/System/Library/Fonts/Supplemental"
 ARIAL = f"{FONT_DIR}/Arial.ttf"
@@ -93,6 +93,7 @@ HYPHENATED_LINES = [
 
 NA = {"outcome": "not_applicable"}
 DS7_NA = {"DS-7": NA}
+DS_SCOPE = {"DS-SCOPE": {"outcome": "not_evaluated"}}
 
 # ---------------------------------------------------------------------------
 # Case table — the single source of truth for pixels, manifest, and the
@@ -100,7 +101,7 @@ DS7_NA = {"DS-7": NA}
 #   labels: list of per-image content dicts (BASE + overrides); "warn" is
 #     None, {"lead_in", "remainder"} (auto-wrapped), or {"lines": [...]}
 #   application: §1 record overrides (application_id/image_filenames added)
-#   expected: §5 expected map — non-pass and not_applicable only
+#   expected: §5 expected map — non-pass, not_applicable, and not_evaluated only
 #   degrade: post-process the render into a skewed/blurred/noisy JPEG
 # ---------------------------------------------------------------------------
 CASES = [
@@ -586,7 +587,7 @@ def main():
                     **case["application"],
                     "image_filenames": filenames,
                 },
-                "expected": case["expected"],
+                "expected": {**case["expected"], **DS_SCOPE},
             }
         )
         faithful[case["case_id"]] = faithful_extraction(
