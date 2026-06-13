@@ -8,10 +8,11 @@ import re
 
 import pytest
 from fastapi.testclient import TestClient
-from helpers import WARNING_ON_LABEL, make_extraction, warning
+from helpers import WARNING_ON_LABEL, field, make_application, make_extraction, warning
 
+from ttb_label_reviewer.engine import review
 from ttb_label_reviewer.extraction import ExtractionError
-from ttb_label_reviewer.main import app, get_extractor
+from ttb_label_reviewer.main import app, get_extractor, templates
 
 client = TestClient(app)
 
@@ -56,7 +57,8 @@ def test_index_serves_the_form():
     # The form posts to the UI endpoint via htmx with multipart encoding.
     assert 'hx-post="/review"' in page
     assert 'hx-encoding="multipart/form-data"' in page
-    for field in (
+    for field_name in (
+        "beverage_type",
         "brand_name",
         "class_type",
         "abv_percent",
@@ -64,7 +66,9 @@ def test_index_serves_the_form():
         "imported",
         "images",
     ):
-        assert f'name="{field}"' in page
+        assert f'name="{field_name}"' in page
+    for value in ("distilled_spirits", "wine", "malt_beverage"):
+        assert f'value="{value}"' in page
     # Vendored assets only (D-10.3): no CDN URLs anywhere on the page.
     assert 'src="/static/htmx.min.js"' in page
     assert "http://" not in page and "https://" not in page
@@ -124,6 +128,62 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
         "DS-SCOPE",
     ):
         assert rule_id in page
+
+
+def test_wine_review_renders_partial_coverage_language(fake_extractor):
+    form = dict(
+        FORM,
+        beverage_type="wine",
+        brand_name="SUNSET CELLARS",
+        class_type="Table Wine",
+        abv_percent="12.0",
+    )
+    fake_extractor.extraction = make_extraction(
+        brand_name={"raw": "SUNSET CELLARS", "confidence": 0.97},
+        class_type={"raw": "Table Wine", "confidence": 0.97},
+        alcohol_content=None,
+        proof=None,
+    )
+
+    response = client.post(
+        "/review", data=form, files=[png_upload()], headers=HTMX_HEADERS
+    )
+
+    assert response.status_code == 200
+    page = response.text
+    assert "Partial coverage" in page
+    assert "No issue found in checked rules" in page
+    assert "Partial coverage &mdash; wine" in page
+    assert "This is not a finding of full" in page
+    assert "1 not evaluated" in page
+    assert "Not evaluated" in page
+    assert "WN-SCOPE" in page
+    assert "12% alcohol by volume" not in page
+
+
+def test_batch_row_renders_coverage_and_not_evaluated_count():
+    result = review(
+        make_application(
+            application_id="wine-row",
+            beverage_type="wine",
+            brand_name="SUNSET CELLARS",
+            class_type="Table Wine",
+            abv_percent=12.0,
+        ),
+        make_extraction(
+            brand_name=field("SUNSET CELLARS"),
+            class_type=field("Table Wine"),
+            alcohol_content=None,
+            proof=None,
+        ),
+    )
+
+    page = templates.env.get_template("partials/batch_row.html").render(result=result)
+
+    assert "Partial coverage" in page
+    assert "No issue found in checked rules" in page
+    assert "1 not evaluated" in page
+    assert "WN-SCOPE" in page
 
 
 def test_ds5a_deviation_renders_character_diff(fake_extractor):

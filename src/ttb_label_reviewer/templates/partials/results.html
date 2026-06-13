@@ -1,18 +1,38 @@
 {# Review result fragment (contracts.md §4): verdict banner, counts, then
    one finding per rule in checklist order (partials/findings.html). #}
 {% set verdict_labels = {"pass": "Pass", "needs_review": "Needs review", "fail": "Fail"} %}
+{% set partial_verdict_labels = {"pass": "No issue found in checked rules", "needs_review": "Needs agent review", "fail": "Issue found"} %}
+{% set display_labels = partial_verdict_labels if result.coverage == "partial" else verdict_labels %}
+{% set first_rule = result.findings[0].rule_id if result.findings else "" %}
+{% set beverage_label = "wine" if first_rule.startswith("WN-") else "malt beverage" if first_rule.startswith("MB-") else "distilled spirits" %}
 {% set evaluated = result.counts.fail + result.counts.needs_review + result.counts.pass_ %}
 <div class="card results-card">
+  <div class="result-meta">
+    <span class="coverage-badge coverage-{{ result.coverage }}">
+      {{ "Full coverage" if result.coverage == "full" else "Partial coverage" }}
+    </span>
+  </div>
   <div class="verdict verdict-{{ result.verdict }}">
-    <span class="verdict-word">{{ verdict_labels[result.verdict] }}</span>
+    <span class="verdict-word">{{ display_labels[result.verdict] }}</span>
     <span class="verdict-counts">
       {{ result.findings | length }} checks: {{ evaluated }} evaluated
       ({{ result.counts.fail }} fail &middot;
        {{ result.counts.needs_review }} needs review &middot;
        {{ result.counts.pass_ }} pass){% if result.counts.not_applicable %},
-      {{ result.counts.not_applicable }} not applicable{% endif %}
+      {{ result.counts.not_applicable }} not applicable{% endif %}{% if result.counts.not_evaluated %},
+      {{ result.counts.not_evaluated }} not evaluated{% endif %}
     </span>
   </div>
+  {% if result.coverage == "partial" %}
+  <p class="coverage-notice">
+    Partial coverage &mdash; {{ beverage_label }}.
+    {% if result.verdict == "pass" %}No issue was found{% elif result.verdict == "needs_review" %}Agent review is needed{% else %}An issue was found{% endif %}
+    in the {{ evaluated }} rules this prototype checks.
+    {{ result.counts.not_evaluated }} category-specific rules were
+    <strong>not evaluated</strong> (see below). This is not a finding of full
+    label compliance.
+  </p>
+  {% endif %}
   <p class="application-id">Application {{ result.application_id }}</p>
 
   {% with findings = result.findings %}{% include "partials/findings.html" %}{% endwith %}

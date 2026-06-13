@@ -10,6 +10,7 @@
         {%- if f.outcome == "pass" %}Pass
         {%- elif f.outcome == "fail" %}Fail
         {%- elif f.outcome == "needs_review" %}Needs review
+        {%- elif f.outcome == "not_evaluated" %}Not evaluated
         {%- else %}N/A{% endif -%}
       </span>
       <span class="rule-name">{{ f.rule_id }} &mdash; {{ f.rule_name }}</span>

@@ -16,8 +16,19 @@
 
     <div class="field">
       <label for="beverage_type">Beverage type</label>
-      <input id="beverage_type" type="text" value="Distilled spirits" disabled>
-      <p class="hint">This prototype reviews distilled spirits labels only.</p>
+      <select id="beverage_type" name="beverage_type" required>
+        <option value="distilled_spirits" selected>Distilled spirits</option>
+        <option value="wine">Wine</option>
+        <option value="malt_beverage">Malt beverage</option>
+      </select>
+      <p class="notice beverage-notice">Wine and malt beverage review is
+        <strong>partial</strong>. This prototype checks the brand name,
+        class/type, alcohol statement, net contents, name/address, country of
+        origin, and the government health warning. Category-specific rules
+        (appellations, standards of fill, ingredient declarations, low-alcohol
+        claims) are <strong>not evaluated</strong> &mdash; they are listed in
+        the results, not silently skipped. Distilled spirits review is the fully
+        built-out path.</p>
     </div>
 
     <div class="field">

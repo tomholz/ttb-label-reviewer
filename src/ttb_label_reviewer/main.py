@@ -124,6 +124,7 @@ def _read_label_images(images: list[UploadFile]) -> list[LabelImage]:
 
 
 def _run_single_review(
+    beverage_type: BeverageType,
     brand_name: str,
     class_type: str,
     abv_percent: float,
@@ -138,7 +139,7 @@ def _run_single_review(
     application = ApplicationRecord(
         # contracts.md §1: single review auto-generates the identifier.
         application_id=f"single-{uuid.uuid4().hex[:8]}",
-        beverage_type=BeverageType.DISTILLED_SPIRITS,
+        beverage_type=beverage_type,
         brand_name=brand_name,
         class_type=class_type,
         abv_percent=abv_percent,
@@ -174,11 +175,13 @@ def api_review(
     net_contents: Annotated[str, Form(min_length=1)],
     images: Annotated[list[UploadFile], File()],
     extractor: Annotated[Extractor, Depends(get_extractor)],
+    beverage_type: Annotated[BeverageType, Form()] = BeverageType.DISTILLED_SPIRITS,
     imported: Annotated[bool, Form()] = False,
 ) -> ReviewResult:
     """Single review: one application record + one-or-more label images
     (untagged, order-irrelevant) -> contracts.md §4 review result."""
     return _run_single_review(
+        beverage_type,
         brand_name,
         class_type,
         abv_percent,
@@ -198,11 +201,13 @@ def ui_review(
     net_contents: Annotated[str, Form(min_length=1)],
     images: Annotated[list[UploadFile], File()],
     extractor: Annotated[Extractor, Depends(get_extractor)],
+    beverage_type: Annotated[BeverageType, Form()] = BeverageType.DISTILLED_SPIRITS,
     imported: Annotated[bool, Form()] = False,
 ) -> HTMLResponse:
     """The single-review form target: same pipeline as /api/review, but
     the result renders as an HTML fragment htmx swaps into the page."""
     result = _run_single_review(
+        beverage_type,
         brand_name,
         class_type,
         abv_percent,

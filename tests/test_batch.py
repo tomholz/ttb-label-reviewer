@@ -23,6 +23,7 @@ from ttb_label_reviewer.batch import (
     RowError,
     parse_batch_zip,
 )
+from ttb_label_reviewer.engine import BeverageType
 from ttb_label_reviewer.extraction import LabelImage
 from ttb_label_reviewer.jobs import BatchJob, run_batch
 from ttb_label_reviewer.main import app, get_extractor
@@ -85,6 +86,25 @@ def test_parses_rows_with_multi_image_and_defaults():
     assert second.images[0].media_type == "image/jpeg"
 
 
+def test_parses_wine_and_malt_beverage_rows():
+    wine_row = (
+        "wine-001,wine,VALLEY VIEW CELLARS,Table Wine,12.5,750 mL,false,wine-front.png"
+    )
+    malt_row = (
+        "malt-001,malt_beverage,HARBOR MALT CO.,Lager,5.0,12 fl oz,false,malt-front.png"
+    )
+    data = make_batch(
+        [wine_row, malt_row],
+        {"wine-front.png": PNG, "malt-front.png": JPEG},
+    )
+    parsed = parse_batch_zip(data)
+    assert parsed.errors == []
+    assert [row.application.beverage_type for row in parsed.rows] == [
+        BeverageType.WINE,
+        BeverageType.MALT_BEVERAGE,
+    ]
+
+
 def test_column_order_is_irrelevant_and_bom_tolerated():
     manifest = (
         "\ufeff"  # Excel's idea of UTF-8 starts with a BOM
@@ -119,13 +139,23 @@ def test_zipped_folder_resolves_images_next_to_manifest():
 def test_template_round_trips_through_the_parser_contract():
     rows = list(csv.DictReader(io.StringIO(TEMPLATE_CSV)))
     assert list(rows[0].keys()) == list(MANIFEST_COLUMNS)
-    assert len(rows) == 1
+    assert len(rows) == 3
     data = make_zip(
-        {"manifest.csv": TEMPLATE_CSV.encode(), "front.png": PNG, "back.png": PNG}
+        {
+            "manifest.csv": TEMPLATE_CSV.encode(),
+            "front.png": PNG,
+            "back.png": PNG,
+            "wine-front.png": PNG,
+            "malt-front.png": PNG,
+        }
     )
     parsed = parse_batch_zip(data)
     assert parsed.errors == []
-    assert parsed.rows[0].application.application_id == "app-001"
+    assert [row.application.application_id for row in parsed.rows] == [
+        "app-001",
+        "app-002",
+        "app-003",
+    ]
 
 
 # --- Parser: row-level errors (fail the row, never the batch) ---
@@ -160,10 +190,11 @@ def test_row_problems_are_collected_into_one_message():
         assert fragment in error.message
 
 
-def test_unsupported_beverage_type_is_row_error():
-    row = old_tom_row().replace("distilled_spirits", "wine")
+def test_unknown_beverage_type_is_row_error():
+    row = old_tom_row().replace("distilled_spirits", "cider")
     error = row_error_of(make_batch([row], {"front.png": PNG}))
-    assert "beverage_type 'wine' is not supported" in error.message
+    assert "beverage_type 'cider' is not supported" in error.message
+    assert "distilled_spirits, wine, malt_beverage" in error.message
 
 
 def test_unrecognized_image_bytes_is_row_error():

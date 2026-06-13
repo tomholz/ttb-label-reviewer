@@ -71,6 +71,78 @@ def test_review_returns_contract_shape(fake_extractor):
     assert ds1["actual"] == "OLD TOM DISTILLERY"
 
 
+def test_review_accepts_wine_beverage_type(fake_extractor):
+    form = dict(
+        FORM,
+        beverage_type="wine",
+        brand_name="SUNSET CELLARS",
+        class_type="Table Wine",
+        abv_percent="12.0",
+    )
+    fake_extractor.extraction = make_extraction(
+        brand_name={"raw": "SUNSET CELLARS", "confidence": 0.97},
+        class_type={"raw": "Table Wine", "confidence": 0.97},
+        alcohol_content=None,
+    )
+
+    response = client.post("/api/review", data=form, files=[png_upload()])
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["coverage"] == "partial"
+    assert body["verdict"] == "pass"
+    assert [f["rule_id"] for f in body["findings"]] == [
+        "WN-1",
+        "WN-2",
+        "WN-3",
+        "WN-4",
+        "WN-5a",
+        "WN-5b",
+        "WN-5c",
+        "WN-5d",
+        "WN-6",
+        "WN-7",
+        "WN-SCOPE",
+    ]
+
+
+def test_review_accepts_malt_beverage_type(fake_extractor):
+    form = dict(
+        FORM,
+        beverage_type="malt_beverage",
+        brand_name="RIVER LAGER",
+        class_type="Beer",
+        abv_percent="5.0",
+        net_contents="12 fl oz",
+    )
+    fake_extractor.extraction = make_extraction(
+        brand_name={"raw": "RIVER LAGER", "confidence": 0.97},
+        class_type={"raw": "Beer", "confidence": 0.97},
+        alcohol_content={"raw": "5% Alc./Vol.", "confidence": 0.97},
+        net_contents={"raw": "12 fl oz", "confidence": 0.97},
+    )
+
+    response = client.post("/api/review", data=form, files=[png_upload()])
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["coverage"] == "partial"
+    assert body["verdict"] == "pass"
+    assert [f["rule_id"] for f in body["findings"]] == [
+        "MB-1",
+        "MB-2",
+        "MB-3",
+        "MB-4",
+        "MB-5a",
+        "MB-5b",
+        "MB-5c",
+        "MB-5d",
+        "MB-6",
+        "MB-7",
+        "MB-SCOPE",
+    ]
+
+
 def test_extraction_error_is_visible_502(fake_extractor):
     fake_extractor.error = ExtractionError("the model had a bad day")
     response = client.post("/api/review", data=FORM, files=[png_upload()])

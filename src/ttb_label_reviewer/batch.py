@@ -32,13 +32,19 @@ REQUIRED_COLUMNS = (
 )
 MANIFEST_COLUMNS = REQUIRED_COLUMNS[:-1] + ("imported", "image_filenames")
 
+ACCEPTED_BEVERAGE_TYPES = tuple(beverage_type.value for beverage_type in BeverageType)
+
 # Offered for download by the UI (contracts.md §2): header plus one
-# example row, exactly the shape parse_batch_zip() accepts.
+# example row per commodity, exactly the shape parse_batch_zip() accepts.
 TEMPLATE_CSV = (
     ",".join(MANIFEST_COLUMNS) + "\r\n"
     "app-001,distilled_spirits,OLD TOM DISTILLERY,"
     "Kentucky Straight Bourbon Whiskey,45.0,750 mL,false,"
     "front.png;back.png\r\n"
+    "app-002,wine,VALLEY VIEW CELLARS,Table Wine,12.5,750 mL,false,"
+    "wine-front.png\r\n"
+    "app-003,malt_beverage,HARBOR MALT CO.,Lager,5.0,12 fl oz,false,"
+    "malt-front.png\r\n"
 )
 
 
@@ -212,10 +218,10 @@ def _parse_row(
             problems.append(f"{column} is blank")
 
     beverage_type = value("beverage_type").lower()
-    if beverage_type != BeverageType.DISTILLED_SPIRITS:
+    if beverage_type not in ACCEPTED_BEVERAGE_TYPES:
         problems.append(
             f"beverage_type {value('beverage_type')!r} is not supported "
-            "(this prototype implements distilled_spirits only)"
+            f"(accepted values: {', '.join(ACCEPTED_BEVERAGE_TYPES)})"
         )
 
     abv_percent = 0.0
@@ -249,7 +255,7 @@ def _parse_row(
         row_number=row_number,
         application=ApplicationRecord(
             application_id=value("application_id"),
-            beverage_type=BeverageType.DISTILLED_SPIRITS,
+            beverage_type=BeverageType(beverage_type),
             brand_name=value("brand_name"),
             class_type=value("class_type"),
             abv_percent=abv_percent,

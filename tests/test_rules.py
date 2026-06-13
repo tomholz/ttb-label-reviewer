@@ -200,6 +200,23 @@ def test_wine_rules_are_registered_with_partial_coverage():
     assert finding(result, "WN-SCOPE").outcome is Outcome.NOT_EVALUATED
 
 
+def test_wn3_lawful_table_wine_omission_has_no_value_evidence():
+    app = make_application(
+        beverage_type="wine",
+        class_type="Table Wine",
+        abv_percent=12.0,
+    )
+    ext = make_extraction(
+        class_type=field("Table Wine"),
+        alcohol_content=None,
+        proof=None,
+    )
+    f = finding(review(app, ext), "WN-3")
+    assert f.outcome is Outcome.PASS
+    assert f.expected is None
+    assert f.actual is None
+
+
 @pytest.mark.parametrize(
     ("app_abv", "class_type", "statement", "outcome", "reason"),
     [

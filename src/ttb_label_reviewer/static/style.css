@@ -61,7 +61,8 @@ main, .site-header, .site-footer {
 
 .field input[type="text"],
 .field input[type="number"],
-.field input[type="file"] {
+.field input[type="file"],
+.field select {
   width: 100%;
   font-size: 1rem;
   padding: 0.6rem 0.7rem;
@@ -71,9 +72,11 @@ main, .site-header, .site-footer {
   color: var(--ink);
 }
 
-.field input:disabled { background: var(--bg); color: var(--muted); }
+.field input:disabled,
+.field select:disabled { background: var(--bg); color: var(--muted); }
 
 .field input:focus-visible,
+.field select:focus-visible,
 .submit:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 1px;
@@ -87,6 +90,15 @@ main, .site-header, .site-footer {
 
 .hint { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0 0; }
 .hint-inline { color: var(--muted); font-weight: 400; font-size: 0.85rem; }
+.notice {
+  background: var(--na-bg);
+  border: 1px solid var(--na-line);
+  border-radius: 8px;
+  color: var(--na-ink);
+  font-size: 0.9rem;
+  margin: 0.65rem 0 0;
+  padding: 0.65rem 0.8rem;
+}
 
 .submit {
   font-size: 1.1rem;
@@ -124,6 +136,33 @@ main, .site-header, .site-footer {
 
 /* --- Results --- */
 
+.result-meta {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.coverage-badge {
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.16rem 0.65rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.coverage-full {
+  background: var(--pass-bg);
+  border-color: var(--pass-line);
+  color: var(--pass-ink);
+}
+.coverage-partial {
+  background: var(--na-bg);
+  border-color: var(--na-line);
+  color: var(--na-ink);
+}
+
 .verdict {
   display: flex;
   align-items: baseline;
@@ -140,6 +179,15 @@ main, .site-header, .site-footer {
 .verdict-word { font-size: 1.4rem; font-weight: 700; }
 .verdict-counts { font-size: 0.95rem; }
 
+.coverage-notice {
+  background: var(--na-bg);
+  border: 1px solid var(--na-line);
+  border-radius: 8px;
+  color: var(--na-ink);
+  margin: 0.8rem 0 0;
+  padding: 0.75rem 0.9rem;
+}
+
 .application-id { color: var(--muted); font-size: 0.85rem; margin: 0.6rem 0 0; }
 
 .findings { list-style: none; padding: 0; margin: 1.25rem 0 0; }
@@ -155,6 +203,7 @@ main, .site-header, .site-footer {
 .finding.outcome-needs_review   { border-left-color: var(--warn-line); }
 .finding.outcome-fail           { border-left-color: var(--fail-line); }
 .finding.outcome-not_applicable { border-left-color: var(--na-line); color: var(--muted); }
+.finding.outcome-not_evaluated  { border-left-color: var(--na-line); background: var(--na-bg); }
 
 .finding-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .rule-name { font-weight: 600; }
@@ -173,6 +222,7 @@ main, .site-header, .site-footer {
 .badge-needs_review   { background: var(--warn-bg); color: var(--warn-ink); border-color: var(--warn-line); }
 .badge-fail           { background: var(--fail-bg); color: var(--fail-ink); border-color: var(--fail-line); }
 .badge-not_applicable { background: var(--na-bg);   color: var(--na-ink);   border-color: var(--na-line); }
+.badge-not_evaluated  { background: var(--na-bg);   color: var(--na-ink);   border-color: var(--na-line); }
 
 .reason {
   color: var(--muted);

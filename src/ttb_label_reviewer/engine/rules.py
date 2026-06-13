@@ -706,7 +706,6 @@ def wn3_alcohol_content(
                 "No alcohol content statement found, but the application class "
                 "type uses a table/light wine designation for wine at or below "
                 "14% ABV.",
-                expected=expected,
             )
         return build(
             Outcome.NEEDS_REVIEW,

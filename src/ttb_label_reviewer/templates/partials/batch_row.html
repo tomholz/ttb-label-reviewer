@@ -3,15 +3,21 @@
    4 pass", not just the aggregate); expanding shows the same per-rule
    findings as a single review. #}
 {% set verdict_labels = {"pass": "Pass", "needs_review": "Needs review", "fail": "Fail"} %}
+{% set partial_verdict_labels = {"pass": "No issue found in checked rules", "needs_review": "Needs agent review", "fail": "Issue found"} %}
+{% set display_labels = partial_verdict_labels if result.coverage == "partial" else verdict_labels %}
 <details class="batch-row outcome-{{ result.verdict }}">
   <summary>
-    <span class="badge badge-{{ result.verdict }}">{{ verdict_labels[result.verdict] }}</span>
+    <span class="badge badge-{{ result.verdict }}">{{ display_labels[result.verdict] }}</span>
+    <span class="coverage-badge coverage-{{ result.coverage }}">
+      {{ "Full coverage" if result.coverage == "full" else "Partial coverage" }}
+    </span>
     <span class="batch-app-id">{{ result.application_id }}</span>
     <span class="batch-row-counts">
       {{ result.counts.fail }} fail &middot;
       {{ result.counts.needs_review }} review &middot;
       {{ result.counts.pass_ }} pass{% if result.counts.not_applicable %} &middot;
-      {{ result.counts.not_applicable }} n/a{% endif %}
+      {{ result.counts.not_applicable }} n/a{% endif %}{% if result.counts.not_evaluated %} &middot;
+      {{ result.counts.not_evaluated }} not evaluated{% endif %}
     </span>
   </summary>
   {% with findings = result.findings %}{% include "partials/findings.html" %}{% endwith %}
