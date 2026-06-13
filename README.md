@@ -245,6 +245,18 @@ nothing-is-retained posture (D-10.4). A dropped connection resumes
 where it left off (SSE `Last-Event-ID` replay), but a server restart
 mid-batch loses the job; re-upload the zip.
 
+### Demo data
+
+The index page has a **Try it with sample data** card: downloadable
+single-review images (with the form values to enter) and an
+11-application demo batch zip, all generated from the golden set —
+known, deliberate defects, so the card can state exactly what you
+should see (3 fail · 2 needs review · 4 pass · 2 row errors). The
+assets are built by `golden/build_demo.py` and committed;
+`tests/test_demo.py` fails CI if the goldens are regenerated without
+rebuilding them. Note the demo runs real extraction: one demo batch
+upload is ~10 vision-API calls.
+
 ## Test & lint
 
 ```sh
@@ -270,8 +282,10 @@ uv run --env-file .env python -m ttb_label_reviewer.evaluation \
   --model claude-haiku-4-5-20251001 --threshold 0.9 --workers 2
 
 # regenerate the golden images + manifest from their single source of
-# truth (macOS fonts; a deliberate act — bump MANIFEST_VERSION)
+# truth (macOS fonts; a deliberate act — bump MANIFEST_VERSION), then
+# rebuild the demo assets derived from them (CI fails if you forget)
 uv run python golden/generate.py
+uv run python golden/build_demo.py
 
 # the degradation/confidence probe behind the threshold decision
 uv run --env-file .env python golden/probe_illegibility.py --case warning-fetal-harm

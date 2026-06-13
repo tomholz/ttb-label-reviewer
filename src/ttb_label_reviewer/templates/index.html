@@ -73,6 +73,37 @@
 
 <section id="results" aria-live="polite"></section>
 
+<section class="card demo-card">
+  <h2>Try it with sample data</h2>
+  <p class="card-intro">No label images handy? These samples come from the
+     project's golden test set, with known, deliberate defects.</p>
+
+  <h3>For a single review</h3>
+  <p class="demo-hint">Download an image, enter its values in the form
+     above, attach the image, and press Review label.</p>
+  <ul class="demo-samples">
+    {% for s in demo.singles %}
+    <li>
+      <a href="/static/demo/{{ s.filename }}" download>{{ s.filename }}</a>
+      &mdash; {{ s.note }}.
+      <span class="demo-values">Brand <code>{{ s.brand_name }}</code> &middot;
+        Class/type <code>{{ s.class_type }}</code> &middot;
+        ABV <code>{{ s.abv_percent }}</code> &middot;
+        Net contents <code>{{ s.net_contents }}</code></span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <h3>For a batch review</h3>
+  <p><a href="/static/demo/demo-batch.zip" download>Download the demo
+     batch</a> ({{ demo.batch.rows }} applications, two deliberately
+     broken) and upload it below. You should see results stream in:
+     <strong>{{ demo.batch.expected.fail }} fail &middot;
+     {{ demo.batch.expected.needs_review }} needs review &middot;
+     {{ demo.batch.expected["pass"] }} pass &middot;
+     {{ demo.batch.expected.error }} row errors</strong>.</p>
+</section>
+
 <section class="card">
   <h2>Review a batch</h2>
   <p class="card-intro">Upload one zip containing <code>manifest.csv</code>

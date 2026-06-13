@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import uuid
 from functools import lru_cache
@@ -302,6 +303,14 @@ async def batch_events(job_id: str, request: Request) -> StreamingResponse:
     )
 
 
+@lru_cache
+def _demo_data() -> dict:
+    """Form values and what-to-expect copy for the sample-data card,
+    generated from the golden set by golden/build_demo.py (committed,
+    drift-tested) — never typed by hand."""
+    return json.loads((_PACKAGE_DIR / "static" / "demo" / "demo.json").read_text())
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse(request, "index.html")
+    return templates.TemplateResponse(request, "index.html", {"demo": _demo_data()})

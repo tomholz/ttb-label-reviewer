@@ -236,6 +236,32 @@ main, .site-header, .site-footer {
 
 .citation { color: var(--muted); font-size: 0.8rem; margin: 0.4rem 0 0; }
 
+/* --- Sample data card --- */
+
+.demo-card h3 { font-size: 1rem; margin: 1.25rem 0 0.3rem; }
+.demo-hint { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.5rem; }
+
+.demo-samples { list-style: none; padding: 0; margin: 0; }
+.demo-samples li {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  margin: 0.45rem 0;
+}
+.demo-values {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+.demo-values code {
+  font-family: ui-monospace, monospace;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 0.3rem;
+}
+
 /* --- Batch results --- */
 
 .batch-status {

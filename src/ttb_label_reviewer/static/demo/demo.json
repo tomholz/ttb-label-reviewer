@@ -1,0 +1,38 @@
+{
+  "golden_manifest_version": "1",
+  "singles": [
+    {
+      "filename": "compliant.png",
+      "brand_name": "OLD TOM RESERVE",
+      "class_type": "Kentucky Straight Bourbon Whiskey",
+      "abv_percent": 45.0,
+      "net_contents": "750 mL",
+      "note": "passes every check, evidence shown on each"
+    },
+    {
+      "filename": "warning-title-case.png",
+      "brand_name": "OLD TOM RESERVE",
+      "class_type": "Kentucky Straight Bourbon Whiskey",
+      "abv_percent": 45.0,
+      "net_contents": "750 mL",
+      "note": "fails the capitalization check \u2014 \"Government Warning\" in title case, the classic catch"
+    },
+    {
+      "filename": "warning-fetal-harm.png",
+      "brand_name": "OLD TOM RESERVE",
+      "class_type": "Kentucky Straight Bourbon Whiskey",
+      "abv_percent": 45.0,
+      "net_contents": "750 mL",
+      "note": "fails the warning text check with a character-level diff (\"birth defects\" reads \"fetal harm\")"
+    }
+  ],
+  "batch": {
+    "rows": 11,
+    "expected": {
+      "fail": 3,
+      "needs_review": 2,
+      "pass": 4,
+      "error": 2
+    }
+  }
+}
