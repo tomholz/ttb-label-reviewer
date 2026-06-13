@@ -1,0 +1,9 @@
+<!-- A label, checked: rounded label shape in the site's federal blue
+     with a white checkmark. Source of truth for the design;
+     scripts/build_favicon.py draws the same shapes into favicon.ico
+     for browsers that request /favicon.ico directly. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="#1a4480"/>
+  <path d="M8.5 17 L14 22.5 L23.5 10.5" fill="none" stroke="#ffffff"
+        stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

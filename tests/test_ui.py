@@ -82,6 +82,16 @@ def test_vendored_assets_are_served():
         assert marker in response.text
 
 
+def test_favicon_is_served():
+    # The default browser request must not 404 (it was the only console
+    # noise on the page); modern browsers get the SVG via the link tag.
+    response = client.get("/favicon.ico")
+    assert response.status_code == 200
+    assert response.content[:4] == b"\x00\x00\x01\x00"  # ICO magic
+    assert 'rel="icon" href="/static/favicon.svg"' in client.get("/").text
+    assert client.get("/static/favicon.svg").status_code == 200
+
+
 def test_review_renders_verdict_counts_and_evidence(fake_extractor):
     response = client.post(
         "/review",

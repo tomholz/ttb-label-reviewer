@@ -12,7 +12,12 @@ from fastapi.exception_handlers import (
     request_validation_exception_handler,
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -150,6 +155,15 @@ def _run_single_review(
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    """Browsers request this path by default; without it, every page
+    view logs a 404. scripts/build_favicon.py draws the file."""
+    return FileResponse(
+        _PACKAGE_DIR / "static" / "favicon.ico", media_type="image/x-icon"
+    )
 
 
 @app.post("/api/review")
