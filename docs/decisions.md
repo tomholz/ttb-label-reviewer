@@ -132,3 +132,50 @@ D-10(3) — fewer moving parts, no CDN pull. Considered and rejected:
 Next.js/Vercel (splits the project across two languages or forces a
 TS renderer); FastAPI + React SPA (two build systems for a time-boxed
 prototype).
+
+## D-12 — Partial coverage is a first-class result posture
+
+Wine and malt beverage review is shipped as partial coverage, not as a
+quiet subset of full compliance. Every result carries a coverage value:
+`full` for distilled spirits, `partial` for wine and malt beverages. The
+UI renders this as a persistent badge and partial-coverage notice, and
+the API returns the same signal. The reason is product safety: a reviewer
+must never mistake "no issue found in checked rules" for "fully compliant
+wine/malt label."
+
+## D-13 — `not_evaluated` is distinct from `not_applicable`
+
+`not_applicable` means a rule does not apply to the label in front of the
+tool; `not_evaluated` means the rule family applies to the commodity, but
+this prototype does not perform that check. Both are aggregation-neutral,
+but they are counted and rendered separately. This keeps scope limits in
+the same evidence channel as other findings instead of burying them in a
+README.
+
+## D-14 — Wine and malt add no extraction fields
+
+Wine and malt beverage support is an engine and UX expansion over the
+existing raw-string extraction contract. Brand, class/type, alcohol
+content, net contents, name/address, country of origin, and government
+warning already cover the defensible partial scope. Adding legal-conclusion
+fields such as "is this a low-alcohol product?" would weaken D-1 by asking
+the model to judge rather than transcribe.
+
+## D-15 — Rule lists are per commodity, helpers are shared
+
+The engine dispatches through per-beverage rule lists so rule IDs stay
+commodity-specific (`DS-`, `WN-`, `MB-`) while the implementation reuses
+shared helpers for common checks. Alcohol content remains category-specific:
+distilled spirits use the DS banding posture, wine uses the 14% threshold
+and ±1.5/±1.0 percentage-point bands, and malt beverages use the ±0.3
+percentage-point band with optional omission behavior.
+
+## D-16 — Distilled spirits gets a scope marker too
+
+The wine/malt expansion made scope honesty visible through
+`WN-SCOPE`/`MB-SCOPE`. Distilled spirits uses the same mechanism via
+`DS-SCOPE` for same-field-of-vision, type-size, and standards-of-fill
+checks. This intentionally changes the stable DS output by adding one
+`not_evaluated` finding per review, but it makes the honesty story
+symmetric across commodities and avoids implying the DS path checks rules
+it does not.

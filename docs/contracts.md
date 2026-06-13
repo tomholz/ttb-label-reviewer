@@ -15,12 +15,12 @@ manifest.
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `application_id` | string | batch: yes; single: auto-generated | Caller's identifier; echoed in results |
-| `beverage_type` | enum | yes | `distilled_spirits` (only implemented value; wine/malt reserved) |
-| `brand_name` | string | yes | DS-1 |
-| `class_type` | string | yes | DS-2 |
-| `abv_percent` | number | yes | DS-3; the number only (45.0), not a statement string |
-| `net_contents` | string | yes | DS-4; e.g. "750 mL" |
-| `imported` | boolean | no (default false) | gates DS-7 |
+| `beverage_type` | enum | yes | `distilled_spirits`, `wine`, or `malt_beverage` |
+| `brand_name` | string | yes | DS/WN/MB-1 |
+| `class_type` | string | yes | DS/WN/MB-2 |
+| `abv_percent` | number | yes | DS/WN/MB-3; the application number only (45.0), not a statement string |
+| `net_contents` | string | yes | DS/WN/MB-4; e.g. "750 mL" |
+| `imported` | boolean | no (default false) | gates DS/WN/MB-7 |
 | `image_filenames` | list | yes | one or more, untagged, order-irrelevant |
 
 ## 2. Batch manifest (CSV in a zip)
@@ -40,8 +40,11 @@ A batch is one zip: `manifest.csv` + image files.
   so it earns no `fail`), reported and counted separately from reviewed
   verdicts and surfaced above them in the results table so it is never
   buried under passes.
+- `beverage_type` accepts `distilled_spirits`, `wine`, and
+  `malt_beverage`. Unknown values are row errors listing the accepted
+  values.
 - The UI offers this file as a downloadable template with one example
-  row.
+  row per accepted beverage type.
 
 ## 3. Extraction result (vision model → rule engine)
 
@@ -85,9 +88,9 @@ priority order:
   `needs_review`/`illegible`) is engine configuration, **not** part of
   this contract — it will be tuned against the golden set.
 - The tri-state visual observations (`lead_in_bold`, etc.) feed the
-  `visual`-mode rules DS-5c/DS-5d: `"yes"` (where that satisfies the
-  rule) → `pass`; anything else → `needs_review`. By construction no
-  mapping to `fail` exists.
+  `visual`-mode rules DS/WN/MB-5c and DS/WN/MB-5d: `"yes"` (where that
+  satisfies the rule) → `pass`; anything else → `needs_review`. By
+  construction no mapping to `fail` exists.
 - Extended thinking/explanations are not part of the contract; the
   model returns this object and nothing else.
 
@@ -97,13 +100,14 @@ priority order:
 {
   "application_id": "row-017",
   "verdict": "fail",                       // worst finding: fail > needs_review > pass
-  "counts": { "fail": 1, "needs_review": 1, "pass": 5, "not_applicable": 1 },
+  "counts": { "fail": 1, "needs_review": 1, "pass": 5, "not_applicable": 1, "not_evaluated": 1 },
+  "coverage": "full",                      // full | partial
   "findings": [
     {
       "rule_id": "DS-5b",
       "rule_name": "GOVERNMENT WARNING capitalization",
-      "outcome": "fail",                   // pass | fail | needs_review | not_applicable
-      "reason": "format",                  // mismatch | missing | illegible | format; null when pass/not_applicable
+      "outcome": "fail",                   // pass | fail | needs_review | not_applicable | not_evaluated
+      "reason": "format",                  // mismatch | missing | illegible | format; null when pass/not_applicable/not_evaluated
       "expected": "GOVERNMENT WARNING",
       "actual": "Government Warning",
       "citation": "27 CFR 16.22(a)(2)",
@@ -118,6 +122,13 @@ priority order:
   is reported for UI completeness ("8 checks: 7 evaluated, 1 n/a") but
   is **excluded from aggregation** — the three-valued outcome model in
   ttb-requirements.md governs evaluated rules only.
+- `not_evaluated` (DS/WN/MB-SCOPE) is also reported and excluded from
+  aggregation, but means something different from `not_applicable`: the
+  rule family applies to the commodity, while this prototype deliberately
+  does not evaluate it.
+- `coverage` is `full` for distilled spirits and `partial` for wine and
+  malt beverage results. It is a presentation and honesty signal; it does
+  not change the verdict enum.
 - `expected` / `actual` appear on every evaluated finding, including
   passes — evidence is the interface (D-8), and a pass the agent can
   eyeball is more trustworthy than a green dot.
@@ -140,7 +151,7 @@ One JSON file at the golden-set root; images alongside.
         "DS-1": { "outcome": "pass" },
         "DS-5a": { "outcome": "pass" },
         "DS-5b": { "outcome": "fail", "reason": "format" }
-        // rules omitted here = expected pass; explicit is required only for non-pass and not_applicable
+        // rules omitted here = expected pass; explicit is required for non-pass, not_applicable, and not_evaluated
       }
     }
   ]
@@ -150,3 +161,5 @@ One JSON file at the golden-set root; images alongside.
 The eval harness runs each case through the real pipeline and scores
 per-rule outcome matches; the scoreboard records model ID, extraction-
 prompt hash, and this manifest's version/hash (D-5).
+The manifest application object accepts the same `beverage_type` enum as
+§1, including `wine` and `malt_beverage`.

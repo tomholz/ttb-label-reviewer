@@ -4,13 +4,16 @@ Curated, scoped distillation of TTB labeling requirements for the label
 verification prototype. This file is the single source of truth for the
 rules implemented in code. Each rule cites its authority.
 
-**Scope:** Distilled spirits only (the sample label is a bourbon).
-Wine (27 CFR Part 4) and malt beverages (27 CFR Part 7) are stubbed below
-for later build-out using the same schema.
+**Scope:** Distilled spirits are the fully built-out path. Wine and malt
+beverages are partial-coverage modes: the prototype checks shared mandatory
+label fields, commodity-specific alcohol-content rules, and the government
+health warning, then emits visible `not_evaluated` scope findings for rules
+past the cut line.
 
-**Verified against:** eCFR current as of June 2026 — all Part 5 and
-Part 16 citations below checked against the eCFR full text
-(versioner API, 2026-06-01). Note that the
+**Verified against:** eCFR current as of June 2026 — Part 5 and
+Part 16 citations were checked against the eCFR full text
+(versioner API, 2026-06-01), and Part 4 / Part 7 citations were checked
+against current eCFR text on 2026-06-13. Note that the
 Distilled Spirits Beverage Alcohol Manual (BAM, TTB P 5110.7) dates from
 04/2007 and predates the 2022 reorganization of Part 5 (T.D. TTB-176);
 where they conflict, the eCFR controls.
@@ -24,14 +27,16 @@ Each rule declares:
 | Field | Meaning |
 |---|---|
 | `kind` | `consistency` (label must match the application), `compliance` (label must satisfy regulation regardless of application), or `internal` (label must be self-consistent) |
-| `match_mode` | `fuzzy` (case/punctuation-insensitive), `banded` (numeric, with pass / needs_review / fail bands), `exact_verbatim` (character-exact after defined normalization), `presence` (field must exist and be legible), `visual` (format/layout judgment from the image; outcomes restricted to `pass` / `needs_review` **by construction** — a `visual` rule can never autonomously fail a label) |
+| `match_mode` | `fuzzy` (case/punctuation-insensitive), `banded` (numeric, with pass / needs_review / fail bands), `exact_verbatim` (character-exact after defined normalization), `presence` (field must exist and be legible), `visual` (format/layout judgment from the image; outcomes restricted to `pass` / `needs_review` **by construction** — a `visual` rule can never autonomously fail a label), `scope_marker` (a rule that visibly reports checks this prototype does not evaluate) |
 | `applies_when` | Optional condition (e.g., `imported == true`) |
 | `citation` | Controlling regulation / guidance section |
 
 ## Outcome model
 
-Per-rule outcomes are three-valued — **pass**, **fail**, **needs_review**
-— and every non-pass finding carries a **reason code**:
+Per-rule evaluated outcomes are three-valued — **pass**, **fail**,
+**needs_review** — plus two aggregation-neutral reporting outcomes:
+**not_applicable** and **not_evaluated**. Every evaluated non-pass finding
+carries a **reason code**:
 
 | Reason | Meaning |
 |---|---|
@@ -47,9 +52,15 @@ Handling rules:
   reason `illegible`. This mirrors current agent practice (reject and
   request a better image — a human call, not an automated one).
 - **Per-label aggregation:** worst of the per-rule outcomes, ordered
-  `fail > needs_review > pass`. The UI surfaces counts (e.g., "2 fail,
-  1 review, 4 pass"), not just the aggregate verdict, to support triage
-  of large batches.
+  `fail > needs_review > pass`. `not_applicable` and `not_evaluated`
+  are counted and rendered but excluded from aggregation. The UI
+  surfaces counts (e.g., "2 fail, 1 review, 4 pass, 1 not evaluated"),
+  not just the aggregate verdict, to support triage of large batches.
+- **`not_applicable` vs. `not_evaluated`:** `not_applicable` means a rule
+  does not apply to this label (for example, country of origin on a
+  domestic product). `not_evaluated` means the rule family applies to the
+  commodity, but this prototype deliberately does not perform it. It is
+  neutral for verdicts but visible in every result surface.
 
 ## Label images: cardinality
 
@@ -248,6 +259,16 @@ fidelity below):
   note 5.65(c) is the actual-vs-labeled tolerance, which this rule does
   not rely on
 
+### DS-SCOPE — Distilled spirits checks outside automated scope
+
+- **kind:** compliance
+- **match_mode:** scope_marker
+- **check:** Always reports `not_evaluated` for distilled-spirits checks
+  this prototype does not perform: same-field-of-vision, type-size, and
+  standards-of-fill requirements. These require layout, measurement, or
+  container facts outside the extracted label fields.
+- **citation:** 27 CFR 5.63(a), 5.70
+
 ---
 
 ## Extraction fidelity
@@ -304,18 +325,186 @@ confidence routes to `needs_review` / `illegible` per the outcome model.
 
 ---
 
-## Wine rules (stub — not yet implemented)
+## Wine rules
 
 Authority: 27 CFR Part 4; warning statement per Part 16 (unchanged across
-commodities). Note: wine under 7% ABV falls under FDA labeling rules, not
-TTB COLA — a jurisdictional edge this tool does not handle.
+commodities). This is partial coverage. Wine under 7% ABV falls under FDA
+labeling rules, not TTB COLA — a jurisdictional edge this tool does not
+handle.
 
-## Malt beverage rules (stub — not yet implemented)
+### WN-1 — Brand name
 
-Authority: 27 CFR Part 7; warning statement per Part 16. ABV tolerance is
-also ±0.3 pp (27 CFR 7.65(c)) with extra floors for "non-alcoholic" /
-"low alcohol" claims. Note: beers made without malted barley may fall
-under FDA rules.
+- **kind:** consistency
+- **match_mode:** fuzzy
+- **check:** Brand name on label matches brand name in application. Same
+  fuzzy behavior as DS-1: case/punctuation variance routes to
+  `needs_review`, not `fail`.
+- **citation:** 27 CFR 4.33
+
+### WN-2 — Class/type designation
+
+- **kind:** consistency
+- **match_mode:** fuzzy
+- **check:** Class/type on label matches the application. Validating the
+  lawfulness of the wine designation itself (varietal, appellation,
+  semi-generic/geographic names) is out of scope and reported by
+  WN-SCOPE.
+- **citation:** 27 CFR 4.34
+
+### WN-3 — Alcohol content
+
+- **kind:** consistency
+- **match_mode:** banded + conditional presence
+- **check:** If the label states alcohol content, compare the parsed numeric
+  label value to the application value. Exact numeric match → `pass`;
+  difference within tolerance → `needs_review` (reason `mismatch`);
+  difference beyond tolerance → `fail`.
+  - **Bands:** ±1.5 percentage points for wine at or below 14% ABV; ±1.0
+    percentage point for wine above 14% ABV.
+  - If the label omits alcohol content and the application ABV is **above
+    14%**, the statement is mandatory → `fail` (reason `missing`).
+  - If the label omits alcohol content and the application ABV is **at or
+    below 14%**, omission is lawful when the class/type contains a
+    qualifying `"table wine"` or `"light wine"` designation → `pass`.
+  - If the label omits alcohol content at or below 14% ABV without a
+    qualifying designation, route to `needs_review` (reason `missing`).
+- **citation:** 27 CFR 4.36
+
+### WN-4 — Net contents
+
+- **kind:** consistency
+- **match_mode:** fuzzy (numeric + unit normalization)
+- **check:** Net contents stated on label and matches application. Missing
+  net contents routes to `needs_review` (reason `missing`) because the
+  label-image-only review may not capture container markings.
+- **citation:** 27 CFR 4.37
+
+### WN-5 — Government health warning
+
+Four sub-checks, identical in behavior to DS-5 and using the same canonical
+Part 16 text:
+
+- **WN-5a:** warning text verbatim. `fail` on missing or mismatched text.
+  **Citation:** 27 CFR 16.21.
+- **WN-5b:** "GOVERNMENT WARNING" capitalization. `fail` on non-capitalized
+  lead-in. **Citation:** 27 CFR 16.22(a)(2).
+- **WN-5c:** bold formatting. Visual mode; can only `pass` or
+  `needs_review`. **Citation:** 27 CFR 16.22(a)(2).
+- **WN-5d:** placement/layout, separate and apart. Visual mode; can only
+  `pass` or `needs_review`. **Citation:** 27 CFR 16.21, 16.22(a)(3).
+
+### WN-6 — Name and address
+
+- **kind:** compliance
+- **match_mode:** presence
+- **check:** A name-and-address statement appears. Verifying the named entity
+  against permit records is out of scope.
+- **citation:** 27 CFR 4.35
+
+### WN-7 — Country of origin
+
+- **kind:** compliance
+- **match_mode:** presence
+- **applies_when:** `imported == true`
+- **check:** Country-of-origin statement appears for imported products.
+  Domestic products report `not_applicable`.
+- **citation:** 19 CFR parts 102 and 134
+
+### WN-SCOPE — Wine checks outside automated scope
+
+- **kind:** compliance
+- **match_mode:** scope_marker
+- **check:** Always reports `not_evaluated` for wine checks this prototype
+  does not perform: appellation, vintage, varietal, semi-generic/geographic
+  name, standards-of-fill, and conditional ingredient/declaration
+  requirements. These require taxonomy, formula, ingredient, or container
+  facts outside the extracted label fields.
+- **citation:** 27 CFR 4.23, 4.24, 4.25, 4.27, 4.32(e), 4.72
+
+## Malt beverage rules
+
+Authority: 27 CFR Part 7; warning statement per Part 16. This is partial
+coverage. Beers made without malted barley or hops may fall under FDA rules.
+
+### MB-1 — Brand name
+
+- **kind:** consistency
+- **match_mode:** fuzzy
+- **check:** Brand name on label matches brand name in application. Same
+  fuzzy behavior as DS-1.
+- **citation:** 27 CFR 7.64
+
+### MB-2 — Class/type designation
+
+- **kind:** consistency
+- **match_mode:** fuzzy
+- **check:** Class/type on label matches the application. Broader claim and
+  class/type lawfulness analysis is out of scope and reported by MB-SCOPE.
+- **citation:** 27 CFR Part 7 Subpart I
+
+### MB-3 — Alcohol content
+
+- **kind:** consistency
+- **match_mode:** banded + conditional presence
+- **check:** If the label states alcohol content, compare the parsed numeric
+  label value to the application value. Exact numeric match → `pass`;
+  difference ≤ 0.3 percentage points → `needs_review` (reason `mismatch`);
+  difference > 0.3 percentage points → `fail`.
+  - If the label omits alcohol content, route to `needs_review` (reason
+    `missing`), never `fail`: the statement is generally optional, with
+    exceptions this label-only review cannot determine.
+- **citation:** 27 CFR 7.65
+
+### MB-4 — Net contents
+
+- **kind:** consistency
+- **match_mode:** fuzzy (numeric + unit normalization)
+- **check:** Net contents stated on label and matches application. Missing
+  net contents routes to `needs_review` (reason `missing`) because the
+  label-image-only review may not capture container markings.
+- **citation:** 27 CFR 7.70
+
+### MB-5 — Government health warning
+
+Four sub-checks, identical in behavior to DS-5 and using the same canonical
+Part 16 text:
+
+- **MB-5a:** warning text verbatim. `fail` on missing or mismatched text.
+  **Citation:** 27 CFR 16.21.
+- **MB-5b:** "GOVERNMENT WARNING" capitalization. `fail` on non-capitalized
+  lead-in. **Citation:** 27 CFR 16.22(a)(2).
+- **MB-5c:** bold formatting. Visual mode; can only `pass` or
+  `needs_review`. **Citation:** 27 CFR 16.22(a)(2).
+- **MB-5d:** placement/layout, separate and apart. Visual mode; can only
+  `pass` or `needs_review`. **Citation:** 27 CFR 16.21, 16.22(a)(3).
+
+### MB-6 — Name and address
+
+- **kind:** compliance
+- **match_mode:** presence
+- **check:** A name-and-address statement appears. Verifying the named entity
+  against permit records is out of scope.
+- **citation:** 27 CFR 7.66-7.68
+
+### MB-7 — Country of origin
+
+- **kind:** compliance
+- **match_mode:** presence
+- **applies_when:** `imported == true`
+- **check:** Country-of-origin statement appears for imported products.
+  Domestic products report `not_applicable`.
+- **citation:** 19 CFR parts 102 and 134
+
+### MB-SCOPE — Malt beverage checks outside automated scope
+
+- **kind:** compliance
+- **match_mode:** scope_marker
+- **check:** Always reports `not_evaluated` for malt beverage checks this
+  prototype does not perform: non-alcoholic, low-alcohol, alcohol-free, or
+  added-flavor alcohol-content triggers; conditional ingredient/declaration
+  requirements; and standards-of-fill questions. These require lab, formula,
+  ingredient, or container facts outside the extracted label fields.
+- **citation:** 27 CFR 7.63(b), 7.65(a), 7.65(b)(3)-(5)
 
 ---
 
@@ -324,16 +513,21 @@ under FDA rules.
 - Type size, legibility, contrasting-background rules
   (27 CFR 5.52, 16.22(a)(1), 16.22(a)(4), 16.22(b)) — not verifiable
   from a single unscaled image (warning placement itself is in scope as
-  the visual-mode check DS-5d)
-- Same-field-of-vision rule (5.63(a)): brand name, class/type, and
-  alcohol content must appear together within a single field of vision
-  (one side of the container; any 40% of circumference for cylinders).
+  the visual-mode DS/WN/MB-5d checks)
+- Same-field-of-vision rules (5.63(a), 4.39(a), 7.61): brand name,
+  class/type, and alcohol content must appear together within a single
+  field of vision (one side of the container; any 40% of circumference
+  for cylinders).
   Under the untagged multi-image contract, a label set could pass every
   per-field check while splitting these three items across sides — this
   tool cannot detect that, and says so rather than pretending otherwise
 - Class/type lawfulness validation (BAM Ch. 4 taxonomy)
 - Standards of fill (authorized container sizes)
-- Formula, ingredient-declaration, organic, and advertising rules
+- Wine appellation, vintage, varietal, semi-generic/geographic-name, and
+  conditional ingredient/declaration checks beyond WN-SCOPE
+- Malt low-alcohol/non-alcoholic/alcohol-free claims, added-flavor ABV
+  triggers, and conditional ingredient/declaration checks beyond MB-SCOPE
+- Formula, organic, and advertising rules
 - COLA system integration and permit verification
 
 ## Sources

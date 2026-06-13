@@ -8,11 +8,11 @@ verdict. **The AI extracts, the code decides.**
 Live at <https://ttb-label-reviewer.fly.dev/>. Design docs live in
 [docs/](docs/) — start with [docs/build-brief.md](docs/build-brief.md).
 
-> Status: milestone 6 (batch flow). Single review and batch review are
-> both available in the browser at `/`; single review also as an API
-> endpoint (`POST /api/review`). The golden set, eval harness, and
-> scoreboard are committed below. Second-pass verification (milestone 7,
-> first in the cut order) remains.
+> Status: Phase 1 wine/malt expansion. Single review, batch review, and
+> `POST /api/review` support distilled spirits with full coverage plus
+> wine and malt beverage partial coverage. The golden set, eval harness,
+> and scoreboard are committed below. Rendered wine/malt demo imagery and
+> a fresh live eval remain Phase 2 work.
 
 ## Architecture
 
@@ -21,6 +21,10 @@ label images ──> extraction adapter ──> rule engine ──> review resul
                  (vision model;         (deterministic,  (verdict, per-rule
                   raw strings only)      CI-tested)       findings, evidence)
 ```
+
+Current rule scope: distilled spirits are full coverage for the prototype;
+wine and malt beverage modes are partial coverage with visible scope-marker
+findings for rules the prototype does not evaluate.
 
 The split is the architecture (D-1): the vision model only *transcribes*
 what is printed on the label into a fixed JSON contract
@@ -41,7 +45,9 @@ pipeline is exposed as a server-rendered single-review UI at `/`
 SSE-streamed results table out); all run the identical pipeline path.
 Every finding shows expected vs. extracted evidence — passes included —
 and the warning check renders a character-level diff (D-8: evidence is
-the interface).*
+the interface). Wine and malt responses include `coverage="partial"`,
+partial-coverage copy, and `not_evaluated` scope findings; distilled
+spirits responses include `coverage="full"` plus their own DS-SCOPE row.*
 
 ## Assumptions
 
@@ -177,7 +183,7 @@ ones.
 Deliberately out of scope (full list with citations in
 [docs/ttb-requirements.md](docs/ttb-requirements.md)):
 
-- **Same-field-of-vision rule (27 CFR 5.63(a)).** Brand name,
+- **Same-field-of-vision rules (27 CFR 5.63(a), 4.39(a), 7.61).** Brand name,
   class/type, and alcohol content must appear together on one side of
   the container. Under the untagged multi-image contract, a label set
   could pass every per-field check while splitting those three items
@@ -186,11 +192,11 @@ Deliberately out of scope (full list with citations in
 - Type-size, legibility, and contrasting-background rules — not
   measurable from an unscaled image (warning *placement* is in scope as
   a visual-mode check).
-- Class/type lawfulness validation (BAM Ch. 4 taxonomy), standards of
-  fill, formula/ingredient/organic/advertising rules.
+- Class/type lawfulness validation, wine appellation/vintage/varietal and
+  semi-generic/geographic-name checks, standards of fill, malt low-alcohol
+  claim verification, formula/ingredient/organic/advertising rules.
 - COLA system integration and permit verification.
-- Distilled spirits only; wine and malt beverage rules are stubbed in
-  the requirements doc for later build-out.
+- Wine under 7% ABV and non-malt beer jurisdictional edges are not handled.
 
 ## Setup
 
@@ -225,6 +231,7 @@ label**. The same review is available as an API:
 
 ```sh
 curl -s http://127.0.0.1:8000/api/review \
+  -F beverage_type='distilled_spirits' \
   -F brand_name='OLD TOM DISTILLERY' \
   -F class_type='Kentucky Straight Bourbon Whiskey' \
   -F abv_percent=45.0 \
@@ -236,8 +243,9 @@ curl -s http://127.0.0.1:8000/api/review \
 
 The batch form on the same page takes one zip containing a
 `manifest.csv` (template downloadable from the form; one row per
-application, `image_filenames` semicolon-separated) plus the label
-images it names. Results stream in over SSE as each label completes
+application, `image_filenames` semicolon-separated, `beverage_type` one of
+`distilled_spirits`, `wine`, or `malt_beverage`) plus the label images it
+names. Results stream in over SSE as each label completes
 (rows are reviewed 4 at a time), grouped worst-first — row errors on
 top, then fail > needs review > pass — with a live counts line; each
 row expands to the same per-rule findings as a single review. A row
@@ -254,13 +262,14 @@ mid-batch loses the job; re-upload the zip.
 
 The index page has a **Try it with sample data** card: downloadable
 single-review images (with the form values to enter) and an
-11-application demo batch zip, all generated from the golden set —
-known, deliberate defects, so the card can state exactly what you
-should see (3 fail · 2 needs review · 4 pass · 2 row errors). The
-assets are built by `golden/build_demo.py` and committed;
+11-application demo batch zip, all generated from the current
+distilled-spirits golden set — known, deliberate defects, so the card can
+state exactly what you should see (3 fail · 2 needs review · 4 pass ·
+2 row errors). The assets are built by `golden/build_demo.py` and committed;
 `tests/test_demo.py` fails CI if the goldens are regenerated without
 rebuilding them. Note the demo runs real extraction: one demo batch
-upload is ~10 vision-API calls.
+upload is ~10 vision-API calls. Mixed DS/wine/malt demo imagery is queued
+for Phase 2; the engine/API/batch paths already accept all three types.
 
 ## Test & lint
 
