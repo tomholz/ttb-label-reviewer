@@ -196,6 +196,11 @@ a:hover { color: var(--accent); }
   margin: 0.65rem 0 0;
   padding: 0.65rem 0.8rem;
 }
+.beverage-notice { display: none; }
+.field:has(#beverage_type option[value="wine"]:checked) .beverage-notice,
+.field:has(#beverage_type option[value="malt_beverage"]:checked) .beverage-notice {
+  display: block;
+}
 
 .submit {
   font-size: 1.1rem;

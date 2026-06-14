@@ -74,6 +74,9 @@ def test_index_serves_the_form():
         assert f'name="{field_name}"' in page
     for value in ("distilled_spirits", "wine", "malt_beverage"):
         assert f'value="{value}"' in page
+    assert 'value="distilled_spirits" selected' in page
+    assert 'id="beverage-coverage-notice"' in page
+    assert 'class="notice beverage-notice"' in page
     # Vendored assets only (D-10.3): no CDN URLs anywhere on the page.
     assert 'src="/static/htmx.min.js"' in page
     assert "http://" not in page and "https://" not in page
@@ -96,6 +99,14 @@ def test_vendored_assets_are_served():
         response = client.get(path)
         assert response.status_code == 200, path
         assert marker in response.text
+
+
+def test_beverage_partial_coverage_notice_is_context_sensitive():
+    css = client.get("/static/style.css").text
+
+    assert ".beverage-notice { display: none; }" in css
+    assert '.field:has(#beverage_type option[value="wine"]:checked)' in css
+    assert '.field:has(#beverage_type option[value="malt_beverage"]:checked)' in css
 
 
 def test_favicon_is_served():
