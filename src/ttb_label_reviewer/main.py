@@ -1,5 +1,6 @@
 import asyncio
 import json
+import mimetypes
 import os
 import uuid
 from functools import lru_cache
@@ -299,9 +300,10 @@ def ui_sample_review(
 
     beverage_type = BeverageType(demo_sample["beverage_type"])
     image_path = _PACKAGE_DIR / "static" / "demo" / demo_sample["filename"]
+    media_type, _ = mimetypes.guess_type(demo_sample["filename"])
     label_image = LabelImage(
         filename=demo_sample["filename"],
-        media_type="image/png",
+        media_type=media_type or "image/png",
         data=image_path.read_bytes(),
     )
     application = ApplicationRecord(
