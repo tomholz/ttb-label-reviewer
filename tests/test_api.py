@@ -60,6 +60,9 @@ def test_review_returns_contract_shape(fake_extractor):
     assert body["counts"]["not_applicable"] == 1  # DS-7, not imported
     assert body["counts"]["not_evaluated"] == 1
     assert body["application_id"].startswith("single-")
+    assert "label_previews" not in body
+    assert "data_url" not in body
+    assert "data:image/png;base64," not in response.text
     rule_ids = [f["rule_id"] for f in body["findings"]]
     assert rule_ids == [
         "DS-1", "DS-2", "DS-3", "DS-4", "DS-5a", "DS-5b",

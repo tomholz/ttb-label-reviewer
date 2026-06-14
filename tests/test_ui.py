@@ -4,6 +4,7 @@ pin the UI contract: form present, results fragment carries verdict +
 counts + evidence, DS-5a renders a character diff, and every error path
 produces a visible fragment rather than silent JSON."""
 
+import base64
 import re
 
 import pytest
@@ -120,10 +121,15 @@ def test_favicon_is_served():
 
 
 def test_review_renders_verdict_counts_and_evidence(fake_extractor):
+    front_bytes = b"front-preview"
+    back_bytes = b"back-preview"
     response = client.post(
         "/review",
         data=FORM,
-        files=[png_upload(), png_upload("back.png")],
+        files=[
+            png_upload(data=front_bytes),
+            png_upload("back.png", data=back_bytes),
+        ],
         headers=HTMX_HEADERS,
     )
     assert response.status_code == 200
@@ -138,6 +144,13 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
     # Evidence is the interface (D-8): expected/actual visible on passes.
     assert page.count("OLD TOM DISTILLERY") >= 2
     assert "27 CFR 5.63, 5.64" in page
+    assert 'class="label-preview"' in page
+    assert "Label images" in page
+    assert "Uploaded label image: front.png" in page
+    assert "Uploaded label image: back.png" in page
+    assert "data:image/png;base64," in page
+    assert base64.b64encode(front_bytes).decode("ascii") in page
+    assert base64.b64encode(back_bytes).decode("ascii") in page
     # All eleven rules appear, in checklist order.
     for rule_id in (
         "DS-1",
@@ -156,6 +169,25 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
         assert rule_id in page
 
 
+def test_review_renders_singular_label_preview(fake_extractor):
+    image_bytes = b"one-label-preview"
+    response = client.post(
+        "/review",
+        data=FORM,
+        files=[png_upload(data=image_bytes)],
+        headers=HTMX_HEADERS,
+    )
+
+    assert response.status_code == 200
+    page = response.text
+    assert 'class="label-preview"' in page
+    assert "Label image" in page
+    assert "Label images" not in page
+    assert "Uploaded label image: front.png" in page
+    assert "data:image/png;base64," in page
+    assert base64.b64encode(image_bytes).decode("ascii") in page
+
+
 def test_sample_review_renders_normal_results_fragment(fake_extractor):
     fake_extractor.extraction = make_extraction(brand_name=field("OLD TOM RESERVE"))
 
@@ -171,6 +203,10 @@ def test_sample_review_renders_normal_results_fragment(fake_extractor):
     assert '<h2 id="review-result-heading">Review result</h2>' in page
     assert "verdict-pass" in page
     assert "Distilled spirits coverage" in page
+    assert 'class="label-preview"' in page
+    assert "Label image" in page
+    assert "Uploaded label image: compliant.png" in page
+    assert "data:image/png;base64," in page
 
 
 def test_unknown_sample_review_is_visible_fragment(fake_extractor):

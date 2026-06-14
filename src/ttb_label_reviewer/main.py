@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import mimetypes
 import os
@@ -22,6 +23,7 @@ from fastapi.responses import (
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 
 from . import limits
 from .batch import TEMPLATE_CSV, BatchError, RowError, parse_batch_zip
@@ -88,6 +90,11 @@ _BEVERAGE_LABELS = {
     BeverageType.WINE: "wine",
     BeverageType.MALT_BEVERAGE: "malt beverage",
 }
+
+
+class LabelPreview(BaseModel):
+    filename: str
+    data_url: str
 
 
 @lru_cache
@@ -175,6 +182,19 @@ def _read_label_images(images: list[UploadFile]) -> list[LabelImage]:
     return label_images
 
 
+def _label_previews(label_images: list[LabelImage]) -> list[LabelPreview]:
+    return [
+        LabelPreview(
+            filename=image.filename,
+            data_url=(
+                f"data:{image.media_type};base64,"
+                f"{base64.b64encode(image.data).decode('ascii')}"
+            ),
+        )
+        for image in label_images
+    ]
+
+
 def _review_application(
     application: ApplicationRecord,
     label_images: list[LabelImage],
@@ -198,6 +218,31 @@ def _run_single_review(
 ) -> ReviewResult:
     """Shared body of the API and UI review endpoints: uploads ->
     application record -> pipeline (D-1). Raises HTTPException only."""
+    result, _ = _run_single_review_with_images(
+        beverage_type,
+        brand_name,
+        class_type,
+        abv_percent,
+        net_contents,
+        imported,
+        images,
+        extractor,
+    )
+    return result
+
+
+def _run_single_review_with_images(
+    beverage_type: BeverageType,
+    brand_name: str,
+    class_type: str,
+    abv_percent: float,
+    net_contents: str,
+    imported: bool,
+    images: list[UploadFile],
+    extractor: Extractor,
+) -> tuple[ReviewResult, list[LabelImage]]:
+    """UI-only variant that keeps the validated in-memory uploads long
+    enough to render a response-local preview."""
     label_images = _read_label_images(images)
     application = ApplicationRecord(
         # contracts.md §1: single review auto-generates the identifier.
@@ -210,7 +255,7 @@ def _run_single_review(
         imported=imported,
         image_filenames=[image.filename for image in label_images],
     )
-    return _review_application(application, label_images, extractor)
+    return _review_application(application, label_images, extractor), label_images
 
 
 @app.get("/healthz")
@@ -266,7 +311,7 @@ def ui_review(
 ) -> HTMLResponse:
     """The single-review form target: same pipeline as /api/review, but
     the result renders as an HTML fragment htmx swaps into the page."""
-    result = _run_single_review(
+    result, label_images = _run_single_review_with_images(
         beverage_type,
         brand_name,
         class_type,
@@ -279,7 +324,11 @@ def ui_review(
     return templates.TemplateResponse(
         request,
         "partials/results.html",
-        {"result": result, "beverage_label": _BEVERAGE_LABELS[beverage_type]},
+        {
+            "result": result,
+            "beverage_label": _BEVERAGE_LABELS[beverage_type],
+            "label_previews": _label_previews(label_images),
+        },
     )
 
 
@@ -320,7 +369,11 @@ def ui_sample_review(
     return templates.TemplateResponse(
         request,
         "partials/results.html",
-        {"result": result, "beverage_label": _BEVERAGE_LABELS[beverage_type]},
+        {
+            "result": result,
+            "beverage_label": _BEVERAGE_LABELS[beverage_type],
+            "label_previews": _label_previews([label_image]),
+        },
     )
 
 

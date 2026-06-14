@@ -31,6 +31,24 @@
   </p>
   {% endif %}
   <p class="application-id">Application {{ result.application_id }}</p>
+  {% if label_previews %}
+  <section class="label-preview" aria-labelledby="label-preview-heading">
+    <h3 id="label-preview-heading">
+      Label image{% if label_previews | length != 1 %}s{% endif %}
+    </h3>
+    <ul class="label-preview-list">
+      {% for preview in label_previews %}
+      <li class="label-preview-item">
+        <img
+          src="{{ preview.data_url }}"
+          alt="Uploaded label image: {{ preview.filename }}"
+        >
+        <span>{{ preview.filename }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 
   {% with findings = result.findings %}{% include "partials/findings.html" %}{% endwith %}
 </div>
