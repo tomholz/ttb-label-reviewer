@@ -105,7 +105,19 @@ public endpoint and would not run unchanged on TTB's network — true of
 any cloud-API prototype, and stated plainly rather than hidden. The
 stakeholder constraints (firewall blocks outbound ML endpoints;
 FedRAMP'd Azure shop) get a designed-in transition story, not just a
-README mention. The design rules, adopted from the first line of code:
+README mention.
+
+It is also deliberately vendor-neutral. Anthropic is the prototype's
+extraction backend — chosen for measured accuracy on the fidelity probes
+([evaluation.md](evaluation.md)) — not a vendor commitment. Because the
+deterministic engine (D-1) owns every compliance decision, no commercial
+vendor ever decides a federal outcome, and the model is a replaceable,
+competitively procurable, FedRAMP-authorized commodity: a production
+deployment selects it through normal authorized/competitive procurement,
+and a forced vendor change (procurement, an ATO finding, or politics) is
+the config swap below, not a rearchitecture.
+
+The design rules, adopted from the first line of code:
 
 1. **Model client is a swappable adapter, and the SDK choice makes the
    swap small.** One module (`extraction/anthropic_adapter.py`) owns the

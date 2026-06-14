@@ -69,7 +69,10 @@ Design decisions and their rationale live in
 - **Cloud API now, federal endpoint later (D-10).** A public cloud API is
   fine for a publicly testable prototype; the model client is a swappable
   adapter (Bedrock GovCloud / Vertex via the same SDK), the only runtime
-  outbound dependency, behind a stateless container. Full transition story:
+  outbound dependency, behind a stateless container. The choice of Anthropic
+  is not a vendor lock-in: the deterministic engine makes every compliance
+  decision, so the model stays a replaceable, competitively procurable,
+  FedRAMP-authorized commodity behind the adapter. Full transition story:
   [docs/decisions.md](docs/decisions.md) D-10.
 
 ## Eval
