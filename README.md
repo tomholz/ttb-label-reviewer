@@ -226,6 +226,26 @@ metadata. The homepage should show a beverage-type selector with
 Distilled spirits, Wine, and Malt beverage options; if it says distilled
 spirits only, Fly is still serving an old image.
 
+## Human-in-the-loop: disposition (deliberate next step, not built)
+
+This is decision-support, not an autograder — the agent makes the final
+call. Dave's example in the brief (`STONE'S THROW` on the label vs
+`Stone's Throw` in the application) is a *technical* mismatch a human
+correctly waves through; the tool's job is to surface it with evidence,
+not to be overruled silently. The natural next feature is therefore a
+per-result **disposition**: accept the verdict, override a finding with a
+recorded reason, or annotate — and for a batch, export the dispositioned
+queue.
+
+It is deliberately not in this prototype. Persistence is out of scope by
+the brief ("We're not storing anything sensitive for this exercise"; a
+"standalone proof-of-concept", no COLA system of record to write back to),
+and a half-built stateful review-of-record is precisely the "ambitious but
+incomplete" path the brief steers away from — it would also pull in the
+PII/retention surface IT asked us to avoid. The substrate is already here:
+every finding renders expected-vs-extracted evidence (D-8), so this is a
+disposition/persistence layer over existing output, not new analysis.
+
 ## Known limitations
 
 Deliberately out of scope (full list with citations in
