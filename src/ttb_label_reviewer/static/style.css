@@ -1,15 +1,28 @@
 /* Single review UI (milestone 4). Design target is the brief's
    "my mother could figure it out": one column, large type, obvious
-   button, color never the only signal (badges carry words). */
+   button, color never the only signal (badges carry words).
+
+   Style: "modern federal" — a refined take on the USWDS look. A system
+   serif carries the display headings (no web-font dependency, no
+   third-party request from a tool that promises uploads are never
+   stored); navy ink, a cool paper background, and a clear type scale do
+   the rest. Markup is untouched: this is a pure restyle. */
 
 :root {
-  --ink: #1a1a1a;
-  --muted: #5a5f66;
-  --line: #d9dce1;
-  --bg: #f4f5f7;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
+           "Times New Roman", serif;
+
+  --ink: #16212e;          /* near-black navy for body text */
+  --muted: #5a6473;
+  --line: #d3dae3;
+  --bg: #eef1f5;           /* cool federal paper */
   --card: #ffffff;
-  --accent: #1a4480;       /* USWDS-adjacent federal blue */
-  --accent-dark: #122e54;
+  --accent: #112e51;       /* USWDS primary-darker navy */
+  --accent-dark: #0b1f38;
+  --accent-bright: #2360a5; /* links / focus, lifts off the navy */
+  --shadow: 0 1px 2px rgba(17, 46, 81, 0.06),
+            0 4px 14px rgba(17, 46, 81, 0.06);
   --pass-bg: #e8f5e9;  --pass-ink: #1b5e20;  --pass-line: #a5d6a7;
   --warn-bg: #fff7e0;  --warn-ink: #7a5800;  --warn-line: #ffd54f;
   --fail-bg: #fdecea;  --fail-ink: #b71c1c;  --fail-line: #ef9a9a;
@@ -19,11 +32,13 @@
 * { box-sizing: border-box; }
 
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--sans);
   color: var(--ink);
   background: var(--bg);
   margin: 0;
   line-height: 1.55;
+  /* Thin federal stripe across the top of every page. */
+  border-top: 4px solid var(--accent);
 }
 
 main, .site-header, .site-footer {
@@ -32,9 +47,22 @@ main, .site-header, .site-footer {
   padding: 0 1.25rem;
 }
 
-.site-header { padding-top: 2.5rem; }
-.site-header h1 { font-size: 1.75rem; margin: 0; }
-.tagline { color: var(--muted); margin: 0.25rem 0 0; }
+.site-header {
+  padding-top: 2.75rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+.site-header h1 {
+  font-family: var(--serif);
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--accent);
+}
+.tagline { color: var(--muted); margin: 0.4rem 0 0; font-size: 1.02rem; }
 
 .site-footer {
   color: var(--muted);
@@ -47,13 +75,20 @@ main, .site-header, .site-footer {
 .card {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 1.75rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 1.85rem 1.9rem;
   margin: 1.5rem 0;
 }
 
-.card h2 { margin-top: 0; font-size: 1.25rem; }
-.card-intro { color: var(--muted); margin-top: -0.5rem; }
+.card h2 {
+  font-family: var(--serif);
+  margin-top: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+.card-intro { color: var(--muted); margin-top: -0.35rem; max-width: 40rem; }
 
 /* --- Form --- */
 
@@ -76,12 +111,20 @@ main, .site-header, .site-footer {
 .field input:disabled,
 .field select:disabled { background: var(--bg); color: var(--muted); }
 
+a {
+  color: var(--accent-bright);
+  text-underline-offset: 2px;
+}
+a:hover { color: var(--accent); }
+
 .field input:focus-visible,
 .field select:focus-visible,
 .submit:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--accent-bright);
   outline-offset: 1px;
 }
+.field input:focus-visible,
+.field select:focus-visible { border-color: var(--accent-bright); }
 
 .field-row { display: flex; gap: 1.25rem; flex-wrap: wrap; }
 .field-row .field { flex: 1 1 14rem; }
@@ -104,6 +147,7 @@ main, .site-header, .site-footer {
 .submit {
   font-size: 1.1rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
   color: #fff;
   background: var(--accent);
   border: none;
@@ -111,6 +155,8 @@ main, .site-header, .site-footer {
   padding: 0.8rem 2.25rem;
   margin-top: 0.75rem;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(11, 31, 56, 0.25);
+  transition: background 0.12s ease;
 }
 .submit:hover { background: var(--accent-dark); }
 .submit:disabled { background: var(--muted); cursor: wait; }
@@ -177,7 +223,7 @@ main, .site-header, .site-footer {
 .verdict-needs_review { background: var(--warn-bg); color: var(--warn-ink); border-color: var(--warn-line); }
 .verdict-fail         { background: var(--fail-bg); color: var(--fail-ink); border-color: var(--fail-line); }
 
-.verdict-word { font-size: 1.4rem; font-weight: 700; }
+.verdict-word { font-family: var(--serif); font-size: 1.5rem; font-weight: 700; }
 .verdict-counts { font-size: 0.95rem; }
 
 .coverage-notice {
@@ -289,7 +335,7 @@ main, .site-header, .site-footer {
 
 /* --- Sample data card --- */
 
-.demo-card h3 { font-size: 1rem; margin: 1.25rem 0 0.3rem; }
+.demo-card h3 { font-family: var(--serif); font-size: 1.08rem; margin: 1.25rem 0 0.3rem; }
 .demo-hint { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.5rem; }
 
 .demo-samples { list-style: none; padding: 0; margin: 0; }
@@ -330,7 +376,7 @@ main, .site-header, .site-footer {
 /* Groups fill as rows stream in; an empty group stays hidden so the
    page never shows a "Fail" heading with nothing under it. */
 .batch-group:has(.batch-rows:empty) { display: none; }
-.batch-group h3 { font-size: 1rem; margin: 1.25rem 0 0.4rem; }
+.batch-group h3 { font-family: var(--serif); font-size: 1.08rem; margin: 1.25rem 0 0.4rem; }
 .group-hint { color: var(--muted); font-size: 0.8rem; font-weight: 400; }
 
 .batch-row {
@@ -352,7 +398,7 @@ main, .site-header, .site-footer {
   flex-wrap: wrap;
   cursor: pointer;
 }
-.batch-row summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.batch-row summary:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 1px; }
 
 .batch-app-id { font-weight: 600; overflow-wrap: anywhere; }
 .batch-row-counts { color: var(--muted); font-size: 0.85rem; }
