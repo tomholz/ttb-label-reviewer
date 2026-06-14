@@ -64,31 +64,34 @@ Two fixes the review surfaced, now in the tree:
 
 ## Phase 2 — golden / demo / eval breadth (cuttable)
 
-### P2.1 — Deterministic golden cases (no imagery)
+### P2.1 — Deterministic golden cases (no imagery) — DONE
 
 - **`golden/faithful_extractions.json` + `manifest.json`:** add memo §8 cases
   1–7 as hand-written faithful extractions (engine-and-dispatch coverage).
   Cases 4, 5, 6 are CI-only; bump `MANIFEST_VERSION`.
 
-### P2.2 — Rendered wine/malt imagery
+### P2.2 — Rendered wine/malt imagery — DONE
 
 - **`golden/generate.py`:** extend the renderer beyond the bourbon shape to
   produce the live-eval cases (memo §8 cases 1–3: `wine-compliant-table`,
   `wine-high-abv-missing-statement`, `malt-compliant`). This is the real-work
   item and the first cut if time-boxed.
 
-### P2.3 — Mixed-category demo batch
+### P2.3 — Mixed-category demo batch — DONE
 
 - **`golden/build_demo.py`:** assemble the mixed DS+wine+malt+unknown demo
   batch (memo §8 case 7); update demo copy and counts;
   `tests/test_demo.py` enforces rebuild.
 
-### P2.4 — Live eval + scoreboard
+### P2.4 — Live eval + scoreboard — DONE
 
-- Run the eval on the new wine/malt images; append a scoreboard row. The
-  warning-fidelity probes are unchanged (identical canonical string across
-  commodities), so the fidelity claim transfers without re-measuring — state
-  this rather than duplicating probes per commodity.
+- Ran the live eval on the current v3 manifest, including the rendered
+  wine/malt images, and appended the README scoreboard row:
+  `247/247 (100.0%)`, `21/21`, `claude-opus-4-8`, prompt
+  `6886dc45365a`, manifest `2176b10ba2e4`.
+- The warning-fidelity probes are unchanged (identical canonical string
+  across commodities), so the fidelity claim transfers without duplicating
+  probes per commodity; README states this explicitly.
 
 ---
 

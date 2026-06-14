@@ -8,11 +8,10 @@ verdict. **The AI extracts, the code decides.**
 Live at <https://ttb-label-reviewer.fly.dev/>. Design docs live in
 [docs/](docs/) — start with [docs/build-brief.md](docs/build-brief.md).
 
-> Status: Phase 1 wine/malt expansion. Single review, batch review, and
+> Status: Wine/malt expansion complete. Single review, batch review, and
 > `POST /api/review` support distilled spirits with full coverage plus
-> wine and malt beverage partial coverage. The golden set, eval harness,
-> and scoreboard are committed below. Rendered wine/malt demo imagery and
-> a fresh live eval remain Phase 2 work.
+> wine and malt beverage partial coverage. The golden set, rendered demo
+> imagery, eval harness, and live-eval scoreboard are committed below.
 
 ## Architecture
 
@@ -113,17 +112,18 @@ designed-in transition story:
 
 ## Eval scoreboard
 
-The golden set is 16 rendered labels with known, deliberate defects
+The current golden set is 21 rendered labels with known, deliberate defects
 ([golden/](golden/), manifest per contracts.md §5) — including the
 extraction-fidelity probes that exist nowhere else: title-case
 "Government Warning:", "birth defects" → "fetal harm", a dropped "(2)",
 end-of-line hyphenation, a warning on a separate back label, and a
-degraded image. Every score records three reproducibility fields — (a)
-the model identifier, (b) a hash of the extraction prompt, (c) the
-golden-set manifest version/hash — because a bare score is not a
-reproducible claim; with those three fields it is. Eval runs are a
-deliberate script with a committed scoreboard, not a blocking CI gate
-(D-5).
+degraded image — plus rendered wine and malt beverage labels proving the
+extractor reads non-bourbon layouts. Every score records three
+reproducibility fields — (a) the model identifier, (b) a hash of the
+extraction prompt, (c) the golden-set manifest version/hash — because a
+bare score is not a reproducible claim; with those three fields it is.
+Eval runs are a deliberate script with a committed scoreboard, not a
+blocking CI gate (D-5).
 
 | Date | Model | Prompt hash | Golden set | Rule outcomes | Cases correct | Mean latency |
 |---|---|---|---|---|---|---|
@@ -131,12 +131,19 @@ deliberate script with a committed scoreboard, not a blocking CI gate
 | 2026-06-11 | claude-sonnet-4-6 | `6886dc45365a` | v1 `464fabaa2311` | 176/176 (100.0%) | 16/16 | 6.3 s |
 | 2026-06-11 | claude-haiku-4-5-20251001 | `6886dc45365a` | v1 `464fabaa2311` | 172/176 (97.7%) | 14/16 | 4.0 s |
 | 2026-06-11 | claude-haiku-4-5-20251001 | `6886dc45365a` | v1 `464fabaa2311` | 148/176 (84.1%) | 11/16 | 4.2 s |
+| 2026-06-13 | claude-opus-4-8 | `6886dc45365a` | v3 `2176b10ba2e4` | 247/247 (100.0%) | 21/21 | 11.0 s |
 
-- Current golden manifest v2 `0f411f08352d` adds one DS-SCOPE
-  `not_evaluated` row per case. That changes the deterministic manifest
-  denominator to 192 reported rule rows: the same 176 extraction-dependent
-  DS outcomes measured above, plus 16 extraction-independent scope markers.
-  The live eval was not rerun for this metadata-only scope row.
+- Current golden manifest v3 `2176b10ba2e4` adds one scope-marker
+  `not_evaluated` row to each review and expands the live rendered set with
+  wine and malt beverage cases. The 2026-06-13 Opus run scored all five
+  wine/malt rendered cases correctly: `wine-compliant-table`,
+  `wine-high-abv-missing-statement`, `malt-compliant`,
+  `malt-abv-mismatch`, and `malt-abv-omitted`.
+- The warning-fidelity probes were not duplicated per commodity. Wine and
+  malt use the same canonical government-warning string and shared warning
+  rules, so the existing title-case, word-substitution, dropped "(2)",
+  hyphenation, back-label, and degraded probes measure the same extraction
+  risk.
 - **Model decision: the default stays `claude-opus-4-8`** (perfect
   score, ~5.7 s warm ≈ the D-3 budget). Sonnet matched it with no
   latency win. The two Haiku rows are *the same configuration run
@@ -147,8 +154,9 @@ deliberate script with a committed scoreboard, not a blocking CI gate
 - Opus and Sonnet transcribed **every fidelity probe faithfully**,
   including the title-case lead-in — the case the model's prior most
   wants to "correct".
-- Latencies are warm; the first request after idle pays a one-time
-  ~47 s structured-output schema compilation on the API side.
+- Historical latencies are warm. The 2026-06-13 row includes a cold
+  structured-output schema compile across the initial worker wave; warmed
+  cases completed in roughly 4-5 s.
 - Per-run detail (including per-field confidences) lands in
   `golden/results/` (gitignored); this table is the committed artifact.
 
@@ -261,15 +269,16 @@ mid-batch loses the job; re-upload the zip.
 ### Demo data
 
 The index page has a **Try it with sample data** card: downloadable
-single-review images (with the form values to enter) and an
-11-application demo batch zip, all generated from the current
-distilled-spirits golden set — known, deliberate defects, so the card can
-state exactly what you should see (3 fail · 2 needs review · 4 pass ·
-2 row errors). The assets are built by `golden/build_demo.py` and committed;
+single-review images (with the form values to enter) and a 16-application
+demo batch zip, all generated from the golden set — known, deliberate
+defects, so the card can state exactly what you should see (5 fail ·
+2 needs review · 6 pass · 3 row errors). The batch is mixed-category:
+distilled spirits, wine, and malt beverage rows together, plus an
+unsupported-`beverage_type` row that exercises the row-error path. The
+assets are built by `golden/build_demo.py` and committed;
 `tests/test_demo.py` fails CI if the goldens are regenerated without
 rebuilding them. Note the demo runs real extraction: one demo batch
-upload is ~10 vision-API calls. Mixed DS/wine/malt demo imagery is queued
-for Phase 2; the engine/API/batch paths already accept all three types.
+upload is ~13 vision-API calls.
 
 ## Test & lint
 
