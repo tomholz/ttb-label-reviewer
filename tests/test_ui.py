@@ -55,6 +55,11 @@ def test_index_serves_the_form():
     assert response.status_code == 200
     page = response.text
     # The form posts to the UI endpoint via htmx with multipart encoding.
+    assert 'aria-label="Review workflow"' in page
+    assert 'href="#single-workflow">Review one label</a>' in page
+    assert 'href="#batch-workflow">Review a batch</a>' in page
+    assert 'id="single-workflow"' in page
+    assert 'id="batch-workflow"' in page
     assert 'hx-post="/review"' in page
     assert 'hx-encoding="multipart/form-data"' in page
     for field_name in (
@@ -80,6 +85,7 @@ def test_index_serves_the_form():
     assert "scrollIntoView({ block: 'start' })" in page
     assert 'hx-post="/review/sample"' in page
     assert "Run this sample" in page
+    assert "Try the batch sample" in page
 
 
 def test_vendored_assets_are_served():
