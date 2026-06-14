@@ -1,5 +1,6 @@
 import asyncio
 import json
+import mimetypes
 import os
 import uuid
 from functools import lru_cache
@@ -174,6 +175,17 @@ def _read_label_images(images: list[UploadFile]) -> list[LabelImage]:
     return label_images
 
 
+def _review_application(
+    application: ApplicationRecord,
+    label_images: list[LabelImage],
+    extractor: Extractor,
+) -> ReviewResult:
+    try:
+        return review_label_set(application, label_images, extractor)
+    except ExtractionError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
 def _run_single_review(
     beverage_type: BeverageType,
     brand_name: str,
@@ -198,10 +210,7 @@ def _run_single_review(
         imported=imported,
         image_filenames=[image.filename for image in label_images],
     )
-    try:
-        return review_label_set(application, label_images, extractor)
-    except ExtractionError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return _review_application(application, label_images, extractor)
 
 
 @app.get("/healthz")
@@ -267,6 +276,47 @@ def ui_review(
         images,
         extractor,
     )
+    return templates.TemplateResponse(
+        request,
+        "partials/results.html",
+        {"result": result, "beverage_label": _BEVERAGE_LABELS[beverage_type]},
+    )
+
+
+@app.post("/review/sample", response_class=HTMLResponse)
+def ui_sample_review(
+    request: Request,
+    sample: Annotated[str, Form()],
+    extractor: Annotated[Extractor, Depends(get_extractor)],
+) -> HTMLResponse:
+    """One-click demo review: whitelist the committed demo filename,
+    read the bundled image, and render the normal single-review result."""
+    demo_sample = next(
+        (entry for entry in _demo_data()["singles"] if entry["filename"] == sample),
+        None,
+    )
+    if demo_sample is None:
+        raise HTTPException(status_code=404, detail="Sample not found.")
+
+    beverage_type = BeverageType(demo_sample["beverage_type"])
+    image_path = _PACKAGE_DIR / "static" / "demo" / demo_sample["filename"]
+    media_type, _ = mimetypes.guess_type(demo_sample["filename"])
+    label_image = LabelImage(
+        filename=demo_sample["filename"],
+        media_type=media_type or "image/png",
+        data=image_path.read_bytes(),
+    )
+    application = ApplicationRecord(
+        application_id=f"sample-{Path(demo_sample['filename']).stem}",
+        beverage_type=beverage_type,
+        brand_name=demo_sample["brand_name"],
+        class_type=demo_sample["class_type"],
+        abv_percent=demo_sample["abv_percent"],
+        net_contents=demo_sample["net_contents"],
+        imported=bool(demo_sample.get("imported", False)),
+        image_filenames=[demo_sample["filename"]],
+    )
+    result = _review_application(application, [label_image], extractor)
     return templates.TemplateResponse(
         request,
         "partials/results.html",

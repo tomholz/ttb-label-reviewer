@@ -2,7 +2,8 @@
    one finding per rule in checklist order (partials/findings.html). #}
 {% set display_labels = PARTIAL_VERDICT_LABELS if result.coverage == "partial" else VERDICT_LABELS %}
 {% set evaluated = result.counts.fail + result.counts.needs_review + result.counts.pass_ %}
-<div class="card results-card">
+<div class="card results-card" tabindex="-1" aria-labelledby="review-result-heading">
+  <h2 id="review-result-heading">Review result</h2>
   <div class="result-meta">
     <span class="coverage-badge coverage-{{ result.coverage }}">
       {{ COVERAGE_LABELS[result.coverage] }}

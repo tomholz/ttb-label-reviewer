@@ -55,6 +55,11 @@ def test_index_serves_the_form():
     assert response.status_code == 200
     page = response.text
     # The form posts to the UI endpoint via htmx with multipart encoding.
+    assert 'aria-label="Review workflow"' in page
+    assert 'href="#single-workflow">Review one label</a>' in page
+    assert 'href="#batch-workflow">Review a batch</a>' in page
+    assert 'id="single-workflow"' in page
+    assert 'id="batch-workflow"' in page
     assert 'hx-post="/review"' in page
     assert 'hx-encoding="multipart/form-data"' in page
     for field_name in (
@@ -69,11 +74,21 @@ def test_index_serves_the_form():
         assert f'name="{field_name}"' in page
     for value in ("distilled_spirits", "wine", "malt_beverage"):
         assert f'value="{value}"' in page
+    assert 'value="distilled_spirits" selected' in page
+    assert 'id="beverage-coverage-notice"' in page
+    assert 'class="notice beverage-notice"' in page
     # Vendored assets only (D-10.3): no CDN URLs anywhere on the page.
     assert 'src="/static/htmx.min.js"' in page
     assert "http://" not in page and "https://" not in page
     # The upload limits enforced in main.py are stated in the form hint.
     assert "Up to 8 images" in page
+    assert 'id="results"' in page
+    assert "hx-on:htmx:after-settle" in page
+    assert "firstElementChild" in page
+    assert "scrollIntoView({ block: 'start' })" in page
+    assert 'hx-post="/review/sample"' in page
+    assert "Run this sample" in page
+    assert "Try the batch sample" in page
 
 
 def test_vendored_assets_are_served():
@@ -84,6 +99,14 @@ def test_vendored_assets_are_served():
         response = client.get(path)
         assert response.status_code == 200, path
         assert marker in response.text
+
+
+def test_beverage_partial_coverage_notice_is_context_sensitive():
+    css = client.get("/static/style.css").text
+
+    assert ".beverage-notice { display: none; }" in css
+    assert '.field:has(#beverage_type option[value="wine"]:checked)' in css
+    assert '.field:has(#beverage_type option[value="malt_beverage"]:checked)' in css
 
 
 def test_favicon_is_served():
@@ -105,6 +128,8 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
     )
     assert response.status_code == 200
     page = response.text
+    assert 'class="card results-card" tabindex="-1"' in page
+    assert '<h2 id="review-result-heading">Review result</h2>' in page
     assert "verdict-pass" in page
     assert "Distilled spirits coverage" in page
     # Counts line: 12 checks, 10 evaluated, DS-7 n/a, DS-SCOPE not evaluated.
@@ -129,6 +154,35 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
         "DS-SCOPE",
     ):
         assert rule_id in page
+
+
+def test_sample_review_renders_normal_results_fragment(fake_extractor):
+    fake_extractor.extraction = make_extraction(brand_name=field("OLD TOM RESERVE"))
+
+    response = client.post(
+        "/review/sample",
+        data={"sample": "compliant.png"},
+        headers=HTMX_HEADERS,
+    )
+
+    assert response.status_code == 200
+    page = response.text
+    assert 'class="card results-card" tabindex="-1"' in page
+    assert '<h2 id="review-result-heading">Review result</h2>' in page
+    assert "verdict-pass" in page
+    assert "Distilled spirits coverage" in page
+
+
+def test_unknown_sample_review_is_visible_fragment(fake_extractor):
+    response = client.post(
+        "/review/sample",
+        data={"sample": "../manifest.json"},
+        headers=HTMX_HEADERS,
+    )
+
+    assert response.status_code == 404
+    assert 'class="card error-card" role="alert" tabindex="-1"' in response.text
+    assert "Sample not found" in response.text
 
 
 def test_wine_review_renders_partial_coverage_language(fake_extractor):
@@ -224,6 +278,7 @@ def test_extraction_error_is_visible_fragment(fake_extractor):
         "/review", data=FORM, files=[png_upload()], headers=HTMX_HEADERS
     )
     assert response.status_code == 502
+    assert 'class="card error-card" role="alert" tabindex="-1"' in response.text
     assert "Review could not be completed" in response.text
     assert "the model had a bad day" in response.text
 

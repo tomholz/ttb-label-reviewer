@@ -1,154 +1,174 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="card">
-  <h2>Review a label</h2>
-  <p class="card-intro">Enter the application details, attach the label
-     images (front, back, side &mdash; any order), and press
-     <strong>Review label</strong>.</p>
+<nav class="workflow-tabs" aria-label="Review workflow">
+  <a class="workflow-tab workflow-tab-single" href="#single-workflow">Review one label</a>
+  <a class="workflow-tab workflow-tab-batch" href="#batch-workflow">Review a batch</a>
+</nav>
 
-  <form id="review-form"
-        hx-post="/review"
-        hx-target="#results"
-        hx-swap="innerHTML"
-        hx-encoding="multipart/form-data"
-        hx-indicator="#indicator"
-        hx-disabled-elt="find button">
+<div class="workflow-shell">
+  <section id="batch-workflow" class="workflow-panel" aria-labelledby="batch-workflow-heading">
+    <section class="card">
+      <h2 id="batch-workflow-heading">Upload a batch</h2>
+      <p class="card-intro">Upload one zip containing <code>manifest.csv</code>
+         and the label images it names &mdash; one row per application.
+         <a href="/batch/template" download>Download the CSV template</a> to
+         start from the expected columns.</p>
 
-    <div class="field">
-      <label for="beverage_type">Beverage type</label>
-      <select id="beverage_type" name="beverage_type" required>
-        <option value="distilled_spirits" selected>Distilled spirits</option>
-        <option value="wine">Wine</option>
-        <option value="malt_beverage">Malt beverage</option>
-      </select>
-      <p class="notice beverage-notice">Wine and malt beverage review is
-        <strong>partial</strong>. This prototype checks the brand name,
-        class/type, alcohol statement, net contents, name/address, country of
-        origin, and the government health warning. Category-specific rules
-        (appellations, standards of fill, ingredient declarations, low-alcohol
-        claims) are <strong>not evaluated</strong> &mdash; they are listed in
-        the results, not silently skipped. Distilled spirits review is the fully
-        built-out path.</p>
-    </div>
-
-    <div class="field">
-      <label for="brand_name">Brand name</label>
-      <input id="brand_name" name="brand_name" type="text" required
-             placeholder="OLD TOM DISTILLERY" autocomplete="off">
-    </div>
-
-    <div class="field">
-      <label for="class_type">Class / type designation</label>
-      <input id="class_type" name="class_type" type="text" required
-             placeholder="Kentucky Straight Bourbon Whiskey" autocomplete="off">
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <label for="abv_percent">Alcohol content (% ABV)</label>
-        <input id="abv_percent" name="abv_percent" type="number" required
-               step="any" min="0" max="100" placeholder="45.0" inputmode="decimal">
+      <div class="demo-block">
+        <h3>Try the batch sample</h3>
+        <p><a href="/static/demo/demo-batch.zip" download>Download the demo
+           batch</a> ({{ demo.batch.rows }} applications,
+           {{ demo.batch.expected.error }} deliberately broken rows) and upload it
+           below. You should see results stream in:
+           <strong>{{ demo.batch.expected.fail }} fail &middot;
+           {{ demo.batch.expected.needs_review }} needs review &middot;
+           {{ demo.batch.expected["pass"] }} pass &middot;
+           {{ demo.batch.expected.error }} row errors</strong>.</p>
       </div>
-      <div class="field">
-        <label for="net_contents">Net contents</label>
-        <input id="net_contents" name="net_contents" type="text" required
-               placeholder="750 mL" autocomplete="off">
-      </div>
-    </div>
 
-    <div class="field field-checkbox">
-      <label>
-        <input name="imported" type="checkbox" value="true">
-        Imported product
-        <span class="hint-inline">(adds the country-of-origin check)</span>
-      </label>
-    </div>
+      <form id="batch-form"
+            hx-post="/batch"
+            hx-target="#batch-results"
+            hx-swap="innerHTML"
+            hx-encoding="multipart/form-data"
+            hx-indicator="#batch-indicator"
+            hx-disabled-elt="find button">
 
-    <div class="field">
-      <label for="images">Label images</label>
-      <input id="images" name="images" type="file" required multiple
-             accept="image/png,image/jpeg,image/webp,image/gif">
-      <p class="hint">Up to 8 images, 5&nbsp;MB each and 20&nbsp;MB total
-         &mdash; JPEG, PNG, WebP, or GIF. A field found on any image
-         satisfies its check.</p>
-    </div>
+        <div class="field">
+          <label for="batch_zip">Batch zip</label>
+          <input id="batch_zip" name="batch_zip" type="file" required
+                 accept=".zip,application/zip,application/x-zip-compressed">
+          <p class="hint">Up to 500 rows. In the manifest, list each row's
+             images separated by semicolons (e.g.
+             <code>front.png;back.png</code>); a row with a problem is
+             reported in the results and never stops the rest of the batch.</p>
+        </div>
 
-    <button type="submit" class="submit">Review label</button>
+        <button type="submit" class="submit">Review batch</button>
 
-    <div id="indicator" class="indicator" role="status">
-      <span class="spinner" aria-hidden="true"></span>
-      Reviewing label set&hellip; usually about 5 seconds.
-    </div>
-  </form>
-</section>
+        <div id="batch-indicator" class="indicator" role="status">
+          <span class="spinner" aria-hidden="true"></span>
+          Uploading batch&hellip; results stream in as each label is reviewed.
+        </div>
+      </form>
+    </section>
 
-<section id="results" aria-live="polite"></section>
+    <section id="batch-results"></section>
+  </section>
 
-<section class="card demo-card">
-  <h2>Try it with sample data</h2>
-  <p class="card-intro">No label images handy? These samples come from the
-     project's golden test set, with known, deliberate defects.</p>
+  <section id="single-workflow" class="workflow-panel" aria-labelledby="single-workflow-heading">
+    <section class="card">
+      <h2 id="single-workflow-heading">Application details</h2>
+      <p class="card-intro">Enter the application details, attach the label
+         images (front, back, side &mdash; any order), and press
+         <strong>Review label</strong>.</p>
 
-  <h3>For a single review</h3>
-  <p class="demo-hint">Download an image, enter its values in the form
-     above, attach the image, and press Review label.</p>
-  <ul class="demo-samples">
-    {% for s in demo.singles %}
-    <li>
-      <a href="/static/demo/{{ s.filename }}" download>{{ s.filename }}</a>
-      &mdash; {{ s.note }}.
-      <span class="demo-values">Brand <code>{{ s.brand_name }}</code> &middot;
-        Class/type <code>{{ s.class_type }}</code> &middot;
-        ABV <code>{{ s.abv_percent }}</code> &middot;
-        Net contents <code>{{ s.net_contents }}</code></span>
-    </li>
-    {% endfor %}
-  </ul>
+      <form id="review-form"
+            hx-post="/review"
+            hx-target="#results"
+            hx-swap="innerHTML"
+            hx-encoding="multipart/form-data"
+            hx-indicator="#indicator"
+            hx-disabled-elt="find button">
 
-  <h3>For a batch review</h3>
-  <p><a href="/static/demo/demo-batch.zip" download>Download the demo
-     batch</a> ({{ demo.batch.rows }} applications,
-     {{ demo.batch.expected.error }} deliberately broken rows) and upload it
-     below. You should see results stream in:
-     <strong>{{ demo.batch.expected.fail }} fail &middot;
-     {{ demo.batch.expected.needs_review }} needs review &middot;
-     {{ demo.batch.expected["pass"] }} pass &middot;
-     {{ demo.batch.expected.error }} row errors</strong>.</p>
-</section>
+        <div class="field">
+          <label for="beverage_type">Beverage type</label>
+          <select id="beverage_type" name="beverage_type" required>
+            <option value="distilled_spirits" selected>Distilled spirits</option>
+            <option value="wine">Wine</option>
+            <option value="malt_beverage">Malt beverage</option>
+          </select>
+          <p id="beverage-coverage-notice"
+             class="notice beverage-notice">Wine and malt beverage review is
+            <strong>partial</strong>. This prototype checks the brand name,
+            class/type, alcohol statement, net contents, name/address, country of
+            origin, and the government health warning. Category-specific rules
+            (appellations, standards of fill, ingredient declarations, low-alcohol
+            claims) are <strong>not evaluated</strong> &mdash; they are listed in
+            the results, not silently skipped. Distilled spirits review is the fully
+            built-out path.</p>
+        </div>
 
-<section class="card">
-  <h2>Review a batch</h2>
-  <p class="card-intro">Upload one zip containing <code>manifest.csv</code>
-     and the label images it names &mdash; one row per application.
-     <a href="/batch/template" download>Download the CSV template</a> to
-     start from the expected columns.</p>
+        <div class="field">
+          <label for="brand_name">Brand name</label>
+          <input id="brand_name" name="brand_name" type="text" required
+                 placeholder="OLD TOM DISTILLERY" autocomplete="off">
+        </div>
 
-  <form id="batch-form"
-        hx-post="/batch"
-        hx-target="#batch-results"
-        hx-swap="innerHTML"
-        hx-encoding="multipart/form-data"
-        hx-indicator="#batch-indicator"
-        hx-disabled-elt="find button">
+        <div class="field">
+          <label for="class_type">Class / type designation</label>
+          <input id="class_type" name="class_type" type="text" required
+                 placeholder="Kentucky Straight Bourbon Whiskey" autocomplete="off">
+        </div>
 
-    <div class="field">
-      <label for="batch_zip">Batch zip</label>
-      <input id="batch_zip" name="batch_zip" type="file" required
-             accept=".zip,application/zip,application/x-zip-compressed">
-      <p class="hint">Up to 500 rows. In the manifest, list each row's
-         images separated by semicolons (e.g.
-         <code>front.png;back.png</code>); a row with a problem is
-         reported in the results and never stops the rest of the batch.</p>
-    </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="abv_percent">Alcohol content (% ABV)</label>
+            <input id="abv_percent" name="abv_percent" type="number" required
+                   step="any" min="0" max="100" placeholder="45.0" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="net_contents">Net contents</label>
+            <input id="net_contents" name="net_contents" type="text" required
+                   placeholder="750 mL" autocomplete="off">
+          </div>
+        </div>
 
-    <button type="submit" class="submit">Review batch</button>
+        <div class="field field-checkbox">
+          <label>
+            <input name="imported" type="checkbox" value="true">
+            Imported product
+            <span class="hint-inline">(adds the country-of-origin check)</span>
+          </label>
+        </div>
 
-    <div id="batch-indicator" class="indicator" role="status">
-      <span class="spinner" aria-hidden="true"></span>
-      Uploading batch&hellip; results stream in as each label is reviewed.
-    </div>
-  </form>
-</section>
+        <div class="field">
+          <label for="images">Label images</label>
+          <input id="images" name="images" type="file" required multiple
+                 accept="image/png,image/jpeg,image/webp,image/gif">
+          <p class="hint">Up to 8 images, 5&nbsp;MB each and 20&nbsp;MB total
+             &mdash; JPEG, PNG, WebP, or GIF. A field found on any image
+             satisfies its check.</p>
+        </div>
 
-<section id="batch-results"></section>
+        <button type="submit" class="submit">Review label</button>
+
+        <div id="indicator" class="indicator" role="status">
+          <span class="spinner" aria-hidden="true"></span>
+          Reviewing label set&hellip; usually about 5 seconds.
+        </div>
+      </form>
+    </section>
+
+    <section id="results" aria-live="polite"
+             hx-on:htmx:after-settle="const result = this.firstElementChild; if (result) { result.scrollIntoView({ block: 'start' }); result.focus(); }"></section>
+
+    <section class="card demo-card">
+      <h2>Try it with sample data</h2>
+      <p class="card-intro">Run a real review immediately, or download an
+         image from the project's golden test set and inspect the values
+         yourself.</p>
+      <ul class="demo-samples">
+        {% for s in demo.singles %}
+        <li>
+          <button type="button"
+                  class="demo-run"
+                  hx-post="/review/sample"
+                  hx-vals='{"sample": "{{ s.filename }}"}'
+                  hx-target="#results"
+                  hx-swap="innerHTML"
+                  hx-indicator="#indicator"
+                  hx-disabled-elt="this">Run this sample &#9656;</button>
+          <a href="/static/demo/{{ s.filename }}" download>{{ s.filename }}</a>
+          &mdash; {{ s.note }}.
+          <span class="demo-values">Brand <code>{{ s.brand_name }}</code> &middot;
+            Class/type <code>{{ s.class_type }}</code> &middot;
+            ABV <code>{{ s.abv_percent }}</code> &middot;
+            Net contents <code>{{ s.net_contents }}</code></span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+  </section>
+</div>
 {% endblock %}

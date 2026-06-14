@@ -3,6 +3,7 @@
   "singles": [
     {
       "filename": "compliant.png",
+      "beverage_type": "distilled_spirits",
       "brand_name": "OLD TOM RESERVE",
       "class_type": "Kentucky Straight Bourbon Whiskey",
       "abv_percent": 45.0,
@@ -11,6 +12,7 @@
     },
     {
       "filename": "warning-title-case.png",
+      "beverage_type": "distilled_spirits",
       "brand_name": "OLD TOM RESERVE",
       "class_type": "Kentucky Straight Bourbon Whiskey",
       "abv_percent": 45.0,
@@ -19,6 +21,7 @@
     },
     {
       "filename": "warning-fetal-harm.png",
+      "beverage_type": "distilled_spirits",
       "brand_name": "OLD TOM RESERVE",
       "class_type": "Kentucky Straight Bourbon Whiskey",
       "abv_percent": 45.0,

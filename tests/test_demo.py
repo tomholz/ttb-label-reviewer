@@ -105,7 +105,13 @@ def test_single_samples_match_the_golden_set(demo, golden_cases):
         assert any(
             all(
                 sample[field] == application[field]
-                for field in ("brand_name", "class_type", "abv_percent", "net_contents")
+                for field in (
+                    "beverage_type",
+                    "brand_name",
+                    "class_type",
+                    "abv_percent",
+                    "net_contents",
+                )
             )
             for application in candidates
         ), sample["filename"]
@@ -121,6 +127,7 @@ def test_index_offers_the_sample_data(demo):
     assert 'href="/static/demo/demo-batch.zip"' in page
     for sample in demo["singles"]:
         assert f'href="/static/demo/{sample["filename"]}"' in page
+        assert 'hx-post="/review/sample"' in page
         assert sample["brand_name"] in page
     # The what-to-expect line carries the generated counts.
     expected = demo["batch"]["expected"]

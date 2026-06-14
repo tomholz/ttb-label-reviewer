@@ -90,6 +90,63 @@ main, .site-header, .site-footer {
 }
 .card-intro { color: var(--muted); margin-top: -0.35rem; max-width: 40rem; }
 
+/* --- Workflow tabs --- */
+
+.workflow-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  background: #dfe5ec;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 1.5rem 0 0.35rem;
+  padding: 0.3rem;
+}
+
+.workflow-tab {
+  border-radius: 6px;
+  color: var(--accent);
+  font-weight: 700;
+  padding: 0.65rem 0.8rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.workflow-tab:hover {
+  background: #f7f9fb;
+  color: var(--accent-dark);
+}
+
+.workflow-tab:focus-visible {
+  outline: 3px solid var(--accent-bright);
+  outline-offset: 1px;
+}
+
+.workflow-tab-single {
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(17, 46, 81, 0.08);
+}
+
+body:has(#batch-workflow:target) .workflow-tab-single {
+  background: transparent;
+  box-shadow: none;
+}
+
+body:has(#batch-workflow:target) .workflow-tab-batch {
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(17, 46, 81, 0.08);
+}
+
+.workflow-panel { display: none; }
+/* A tab is an in-page anchor (:target). Without this, jumping to a panel
+   scrolls it flush to the viewport top and pushes the tab strip out of
+   view; the margin keeps the tabs visible after the jump. */
+.workflow-panel { scroll-margin-top: 6rem; }
+#single-workflow { display: block; }
+#batch-workflow:target { display: block; }
+#batch-workflow:target + #single-workflow { display: none; }
+#single-workflow:target { display: block; }
+
 /* --- Form --- */
 
 .field { margin: 1.1rem 0; }
@@ -143,6 +200,11 @@ a:hover { color: var(--accent); }
   margin: 0.65rem 0 0;
   padding: 0.65rem 0.8rem;
 }
+.beverage-notice { display: none; }
+.field:has(#beverage_type option[value="wine"]:checked) .beverage-notice,
+.field:has(#beverage_type option[value="malt_beverage"]:checked) .beverage-notice {
+  display: block;
+}
 
 .submit {
   font-size: 1.1rem;
@@ -182,6 +244,12 @@ a:hover { color: var(--accent); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* --- Results --- */
+
+.results-card:focus,
+.error-card:focus {
+  outline: 3px solid var(--accent-bright);
+  outline-offset: 2px;
+}
 
 .result-meta {
   display: flex;
@@ -335,6 +403,15 @@ a:hover { color: var(--accent); }
 
 /* --- Sample data card --- */
 
+.demo-block {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 1.1rem 0 1.25rem;
+  padding: 0.75rem 0.9rem;
+}
+.demo-block h3 { margin-top: 0; }
+.demo-block p { margin-bottom: 0; }
 .demo-card h3 { font-family: var(--serif); font-size: 1.08rem; margin: 1.25rem 0 0.3rem; }
 .demo-hint { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.5rem; }
 
@@ -345,6 +422,21 @@ a:hover { color: var(--accent); }
   padding: 0.6rem 0.9rem;
   margin: 0.45rem 0;
 }
+.demo-run {
+  appearance: none;
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0.55rem 0.35rem 0;
+  padding: 0.4rem 0.65rem;
+}
+.demo-run:hover { background: var(--accent-dark); }
+.demo-run:disabled { background: var(--muted); cursor: wait; }
 .demo-values {
   display: block;
   color: var(--muted);
@@ -422,3 +514,9 @@ a:hover { color: var(--accent); }
 }
 .error-card p { margin: 0.5rem 0 0; }
 .error-hint { font-size: 0.85rem; }
+
+@media (max-width: 34rem) {
+  .workflow-tabs { grid-template-columns: 1fr; }
+  /* The stacked two-row tab strip is taller, so clear more space. */
+  .workflow-panel { scroll-margin-top: 9rem; }
+}
