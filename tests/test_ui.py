@@ -78,6 +78,8 @@ def test_index_serves_the_form():
     assert "hx-on::htmx:after-settle" in page
     assert "firstElementChild" in page
     assert "scrollIntoView({ block: 'start' })" in page
+    assert 'hx-post="/review/sample"' in page
+    assert "Run this sample" in page
 
 
 def test_vendored_assets_are_served():
@@ -135,6 +137,35 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
         "DS-SCOPE",
     ):
         assert rule_id in page
+
+
+def test_sample_review_renders_normal_results_fragment(fake_extractor):
+    fake_extractor.extraction = make_extraction(brand_name=field("OLD TOM RESERVE"))
+
+    response = client.post(
+        "/review/sample",
+        data={"sample": "compliant.png"},
+        headers=HTMX_HEADERS,
+    )
+
+    assert response.status_code == 200
+    page = response.text
+    assert 'class="card results-card" tabindex="-1"' in page
+    assert '<h2 id="review-result-heading">Review result</h2>' in page
+    assert "verdict-pass" in page
+    assert "Distilled spirits coverage" in page
+
+
+def test_unknown_sample_review_is_visible_fragment(fake_extractor):
+    response = client.post(
+        "/review/sample",
+        data={"sample": "../manifest.json"},
+        headers=HTMX_HEADERS,
+    )
+
+    assert response.status_code == 404
+    assert 'class="card error-card" role="alert" tabindex="-1"' in response.text
+    assert "Sample not found" in response.text
 
 
 def test_wine_review_renders_partial_coverage_language(fake_extractor):

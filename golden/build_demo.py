@@ -174,6 +174,7 @@ def main() -> None:
         singles.append(
             {
                 "filename": filename,
+                "beverage_type": application["beverage_type"],
                 "brand_name": application["brand_name"],
                 "class_type": application["class_type"],
                 "abv_percent": application["abv_percent"],

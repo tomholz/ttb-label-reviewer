@@ -91,11 +91,19 @@
      project's golden test set, with known, deliberate defects.</p>
 
   <h3>For a single review</h3>
-  <p class="demo-hint">Download an image, enter its values in the form
-     above, attach the image, and press Review label.</p>
+  <p class="demo-hint">Run a real review immediately, or download the image
+     and inspect the values yourself.</p>
   <ul class="demo-samples">
     {% for s in demo.singles %}
     <li>
+      <button type="button"
+              class="demo-run"
+              hx-post="/review/sample"
+              hx-vals='{"sample": "{{ s.filename }}"}'
+              hx-target="#results"
+              hx-swap="innerHTML"
+              hx-indicator="#indicator"
+              hx-disabled-elt="this">Run this sample &#9656;</button>
       <a href="/static/demo/{{ s.filename }}" download>{{ s.filename }}</a>
       &mdash; {{ s.note }}.
       <span class="demo-values">Brand <code>{{ s.brand_name }}</code> &middot;
