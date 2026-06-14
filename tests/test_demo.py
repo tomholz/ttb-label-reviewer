@@ -39,10 +39,24 @@ def parsed_zip():
 def test_demo_zip_parses_with_exactly_the_advertised_rows(parsed_zip, demo):
     assert parsed_zip.total == demo["batch"]["rows"]
     assert len(parsed_zip.errors) == demo["batch"]["expected"]["error"]
-    # The two broken rows fail for the reasons they were built to show.
+    # The broken rows fail for the reasons they were built to show.
     by_id = {error.application_id: error.message for error in parsed_zip.errors}
+    assert "beverage_type 'cider' is not supported" in by_id["demo-unsupported-cider"]
     assert "'ghost.png' is not in the zip" in by_id["demo-broken-image"]
     assert "is not a number" in by_id["demo-broken-abv"]
+
+
+def test_demo_zip_is_the_mixed_category_batch(parsed_zip):
+    beverage_types = {row.application.beverage_type.value for row in parsed_zip.rows}
+    assert beverage_types == {"distilled_spirits", "wine", "malt_beverage"}
+
+    application_ids = {row.application.application_id for row in parsed_zip.rows}
+    assert {
+        "wine-compliant-table",
+        "wine-high-abv-missing-statement",
+        "malt-compliant",
+        "malt-abv-mismatch",
+    } <= application_ids
 
 
 def test_demo_zip_rows_match_the_golden_set(parsed_zip, golden_cases):
@@ -65,7 +79,7 @@ def test_advertised_counts_follow_from_golden_expectations(
         outcomes = {
             entry["outcome"]
             for entry in expected.values()
-            if entry["outcome"] != "not_applicable"
+            if entry["outcome"] not in {"not_applicable", "not_evaluated"}
         }
         if "fail" in outcomes:
             counts["fail"] += 1
@@ -78,16 +92,23 @@ def test_advertised_counts_follow_from_golden_expectations(
 
 
 def test_single_samples_match_the_golden_set(demo, golden_cases):
-    by_filename = {
-        case["application"]["image_filenames"][0]: case["application"]
-        for case in golden_cases.values()
-        if len(case["application"]["image_filenames"]) == 1
-    }
+    by_filename: dict[str, list[dict]] = {}
+    for case in golden_cases.values():
+        if len(case["application"]["image_filenames"]) != 1:
+            continue
+        by_filename.setdefault(case["application"]["image_filenames"][0], []).append(
+            case["application"]
+        )
     assert len(demo["singles"]) >= 2
     for sample in demo["singles"]:
-        application = by_filename[sample["filename"]]
-        for field in ("brand_name", "class_type", "abv_percent", "net_contents"):
-            assert sample[field] == application[field], sample["filename"]
+        candidates = by_filename[sample["filename"]]
+        assert any(
+            all(
+                sample[field] == application[field]
+                for field in ("brand_name", "class_type", "abv_percent", "net_contents")
+            )
+            for application in candidates
+        ), sample["filename"]
         # The downloadable copy is byte-identical to the golden image.
         assert (DEMO_DIR / sample["filename"]).read_bytes() == (
             GOLDEN_DIR / sample["filename"]

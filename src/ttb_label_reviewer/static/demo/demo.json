@@ -1,5 +1,5 @@
 {
-  "golden_manifest_version": "1",
+  "golden_manifest_version": "3",
   "singles": [
     {
       "filename": "compliant.png",
@@ -27,12 +27,12 @@
     }
   ],
   "batch": {
-    "rows": 11,
+    "rows": 16,
     "expected": {
-      "fail": 3,
+      "fail": 5,
       "needs_review": 2,
-      "pass": 4,
-      "error": 2
+      "pass": 6,
+      "error": 3
     }
   }
 }

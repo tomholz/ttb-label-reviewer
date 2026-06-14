@@ -36,7 +36,7 @@ from ttb_label_reviewer.engine.canonical import CANONICAL_WARNING
 from ttb_label_reviewer.engine.normalize import normalize_warning
 
 OUT_DIR = Path(__file__).parent
-MANIFEST_VERSION = "2"
+MANIFEST_VERSION = "3"
 
 FONT_DIR = "/System/Library/Fonts/Supplemental"
 ARIAL = f"{FONT_DIR}/Arial.ttf"
@@ -93,7 +93,16 @@ HYPHENATED_LINES = [
 
 NA = {"outcome": "not_applicable"}
 DS7_NA = {"DS-7": NA}
-DS_SCOPE = {"DS-SCOPE": {"outcome": "not_evaluated"}}
+COUNTRY_ORIGIN_NA = {
+    "distilled_spirits": {"DS-7": NA},
+    "wine": {"WN-7": NA},
+    "malt_beverage": {"MB-7": NA},
+}
+SCOPE_MARKERS = {
+    "distilled_spirits": {"DS-SCOPE": {"outcome": "not_evaluated"}},
+    "wine": {"WN-SCOPE": {"outcome": "not_evaluated"}},
+    "malt_beverage": {"MB-SCOPE": {"outcome": "not_evaluated"}},
+}
 
 # ---------------------------------------------------------------------------
 # Case table — the single source of truth for pixels, manifest, and the
@@ -376,6 +385,147 @@ CASES = [
         "expected": {**DS7_NA},
         "degrade": True,
     },
+    {
+        "case_id": "wine-compliant-table",
+        "purpose": (
+            "Wine baseline: shared rules pass, <=14% table-wine alcohol omission "
+            "is lawful, and WN-SCOPE emits visible not_evaluated rows."
+        ),
+        "labels": [
+            {
+                **BASE,
+                "brand": "VALLEY CREST",
+                "class_type": "California Table Wine",
+                "abv": None,
+                "proof": None,
+                "net": "750 mL",
+                "address": "Produced and bottled by Valley Crest Winery, Sonoma, CA",
+                "warn": CANONICAL_WARN,
+            }
+        ],
+        "application": {
+            "beverage_type": "wine",
+            "brand_name": "VALLEY CREST",
+            "class_type": "California Table Wine",
+            "abv_percent": 12.5,
+            "net_contents": "750 mL",
+            "imported": False,
+        },
+        "expected": {},
+    },
+    {
+        "case_id": "wine-high-abv-missing-statement",
+        "purpose": (
+            "Wine above 14% ABV with no alcohol-content statement: WN-3 must "
+            "fail missing while shared rules pass."
+        ),
+        "labels": [
+            {
+                **BASE,
+                "brand": "VALLEY CREST",
+                "class_type": "Napa Valley Cabernet Sauvignon",
+                "abv": None,
+                "proof": None,
+                "net": "750 mL",
+                "address": "Produced and bottled by Valley Crest Winery, Sonoma, CA",
+                "warn": CANONICAL_WARN,
+            }
+        ],
+        "application": {
+            "beverage_type": "wine",
+            "brand_name": "VALLEY CREST",
+            "class_type": "Napa Valley Cabernet Sauvignon",
+            "abv_percent": 15.5,
+            "net_contents": "750 mL",
+            "imported": False,
+        },
+        "expected": {"WN-3": {"outcome": "fail", "reason": "missing"}},
+    },
+    {
+        "case_id": "malt-compliant",
+        "purpose": (
+            "Malt baseline: shared rules pass and MB-3 passes a present optional "
+            "ABV statement."
+        ),
+        "labels": [
+            {
+                **BASE,
+                "brand": "NORTHGATE",
+                "class_type": "India Pale Ale",
+                "abv": "6.8% ALC/VOL",
+                "proof": None,
+                "net": "12 FL OZ",
+                "address": "Brewed and canned by Northgate Brewing Co., Milwaukee, WI",
+                "warn": CANONICAL_WARN,
+            }
+        ],
+        "application": {
+            "beverage_type": "malt_beverage",
+            "brand_name": "NORTHGATE",
+            "class_type": "India Pale Ale",
+            "abv_percent": 6.8,
+            "net_contents": "12 FL OZ",
+            "imported": False,
+        },
+        "expected": {},
+    },
+    {
+        "case_id": "malt-abv-mismatch",
+        "purpose": (
+            "Malt ABV beyond the +-0.3 pp consistency band: MB-3 must fail "
+            "mismatch while shared rules pass."
+        ),
+        "labels": [
+            {
+                **BASE,
+                "brand": "NORTHGATE",
+                "class_type": "Lager",
+                "abv": "7.5% ALC/VOL",
+                "proof": None,
+                "net": "12 FL OZ",
+                "address": "Brewed and canned by Northgate Brewing Co., Milwaukee, WI",
+                "warn": CANONICAL_WARN,
+            }
+        ],
+        "application": {
+            "beverage_type": "malt_beverage",
+            "brand_name": "NORTHGATE",
+            "class_type": "Lager",
+            "abv_percent": 5.0,
+            "net_contents": "12 FL OZ",
+            "imported": False,
+        },
+        "expected": {"MB-3": {"outcome": "fail", "reason": "mismatch"}},
+    },
+    {
+        "case_id": "malt-abv-omitted",
+        "purpose": (
+            "Missing malt ABV routes to needs_review, not fail, because malt "
+            "alcohol content is optional except for triggers outside this "
+            "label-only review."
+        ),
+        "labels": [
+            {
+                **BASE,
+                "brand": "NORTHGATE",
+                "class_type": "Lager",
+                "abv": None,
+                "proof": None,
+                "net": "12 FL OZ",
+                "address": "Brewed and canned by Northgate Brewing Co., Milwaukee, WI",
+                "warn": CANONICAL_WARN,
+            }
+        ],
+        "application": {
+            "beverage_type": "malt_beverage",
+            "brand_name": "NORTHGATE",
+            "class_type": "Lager",
+            "abv_percent": 4.5,
+            "net_contents": "12 FL OZ",
+            "imported": False,
+        },
+        "expected": {"MB-3": {"outcome": "needs_review", "reason": "missing"}},
+    },
 ]
 
 
@@ -555,6 +705,13 @@ def image_filenames(case) -> list[str]:
     ]
 
 
+def automatic_expected(beverage_type: str, application: dict) -> dict:
+    expected = dict(SCOPE_MARKERS[beverage_type])
+    if not application.get("imported", False):
+        expected.update(COUNTRY_ORIGIN_NA[beverage_type])
+    return expected
+
+
 def main():
     hyphenated_text = "\n".join(
         " ".join(text for text, _ in line) for line in HYPHENATED_LINES
@@ -564,6 +721,8 @@ def main():
     manifest_cases = []
     faithful = {}
     for case in CASES:
+        application = {**BASE_APPLICATION, **case["application"]}
+        beverage_type = application["beverage_type"]
         filenames = image_filenames(case)
         warn_lines_per_label = []
         for content, filename in zip(case["labels"], filenames, strict=True):
@@ -583,11 +742,13 @@ def main():
                 "purpose": case["purpose"],
                 "application": {
                     "application_id": case["case_id"],
-                    **BASE_APPLICATION,
-                    **case["application"],
+                    **application,
                     "image_filenames": filenames,
                 },
-                "expected": {**case["expected"], **DS_SCOPE},
+                "expected": {
+                    **case["expected"],
+                    **automatic_expected(beverage_type, application),
+                },
             }
         )
         faithful[case["case_id"]] = faithful_extraction(

@@ -68,6 +68,21 @@ def test_required_probe_cases_present():
         assert case_id in CASES
 
 
+def test_wine_malt_golden_cases_present():
+    for case_id in (
+        "wine-compliant-table",
+        "wine-high-abv-missing-statement",
+        "malt-compliant",
+        "malt-abv-mismatch",
+        "malt-abv-omitted",
+    ):
+        assert case_id in CASES
+
+    assert CASES["wine-compliant-table"].expected["WN-SCOPE"].outcome is (
+        Outcome.NOT_EVALUATED
+    )
+
+
 def test_multi_image_case_present():
     assert len(CASES["warning-back-label"].application.image_filenames) > 1
 

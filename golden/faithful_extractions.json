@@ -527,5 +527,151 @@
       "separate_and_apart": "yes",
       "confidence": 0.93
     }
+  },
+  "wine-compliant-table": {
+    "brand_name": {
+      "raw": "VALLEY CREST",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "California Table Wine",
+      "confidence": 0.97
+    },
+    "alcohol_content": null,
+    "proof": null,
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Produced and bottled by Valley Crest Winery, Sonoma, CA",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "wine-high-abv-missing-statement": {
+    "brand_name": {
+      "raw": "VALLEY CREST",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Napa Valley Cabernet Sauvignon",
+      "confidence": 0.97
+    },
+    "alcohol_content": null,
+    "proof": null,
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Produced and bottled by Valley Crest Winery, Sonoma, CA",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "malt-compliant": {
+    "brand_name": {
+      "raw": "NORTHGATE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "India Pale Ale",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "6.8% ALC/VOL",
+      "confidence": 0.97
+    },
+    "proof": null,
+    "net_contents": {
+      "raw": "12 FL OZ",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Brewed and canned by Northgate Brewing Co., Milwaukee, WI",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "malt-abv-mismatch": {
+    "brand_name": {
+      "raw": "NORTHGATE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Lager",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "7.5% ALC/VOL",
+      "confidence": 0.97
+    },
+    "proof": null,
+    "net_contents": {
+      "raw": "12 FL OZ",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Brewed and canned by Northgate Brewing Co., Milwaukee, WI",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
+  "malt-abv-omitted": {
+    "brand_name": {
+      "raw": "NORTHGATE",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "Lager",
+      "confidence": 0.97
+    },
+    "alcohol_content": null,
+    "proof": null,
+    "net_contents": {
+      "raw": "12 FL OZ",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Brewed and canned by Northgate Brewing Co., Milwaukee, WI",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
   }
 }

@@ -107,8 +107,9 @@
 
   <h3>For a batch review</h3>
   <p><a href="/static/demo/demo-batch.zip" download>Download the demo
-     batch</a> ({{ demo.batch.rows }} applications, two deliberately
-     broken) and upload it below. You should see results stream in:
+     batch</a> ({{ demo.batch.rows }} applications,
+     {{ demo.batch.expected.error }} deliberately broken rows) and upload it
+     below. You should see results stream in:
      <strong>{{ demo.batch.expected.fail }} fail &middot;
      {{ demo.batch.expected.needs_review }} needs review &middot;
      {{ demo.batch.expected["pass"] }} pass &middot;

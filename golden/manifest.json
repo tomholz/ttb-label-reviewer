@@ -1,5 +1,5 @@
 {
-  "version": "2",
+  "version": "3",
   "cases": [
     {
       "case_id": "compliant",
@@ -443,6 +443,138 @@
         },
         "DS-SCOPE": {
           "outcome": "not_evaluated"
+        }
+      }
+    },
+    {
+      "case_id": "wine-compliant-table",
+      "purpose": "Wine baseline: shared rules pass, <=14% table-wine alcohol omission is lawful, and WN-SCOPE emits visible not_evaluated rows.",
+      "application": {
+        "application_id": "wine-compliant-table",
+        "beverage_type": "wine",
+        "brand_name": "VALLEY CREST",
+        "class_type": "California Table Wine",
+        "abv_percent": 12.5,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "wine-compliant-table.png"
+        ]
+      },
+      "expected": {
+        "WN-SCOPE": {
+          "outcome": "not_evaluated"
+        },
+        "WN-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "wine-high-abv-missing-statement",
+      "purpose": "Wine above 14% ABV with no alcohol-content statement: WN-3 must fail missing while shared rules pass.",
+      "application": {
+        "application_id": "wine-high-abv-missing-statement",
+        "beverage_type": "wine",
+        "brand_name": "VALLEY CREST",
+        "class_type": "Napa Valley Cabernet Sauvignon",
+        "abv_percent": 15.5,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "wine-high-abv-missing-statement.png"
+        ]
+      },
+      "expected": {
+        "WN-3": {
+          "outcome": "fail",
+          "reason": "missing"
+        },
+        "WN-SCOPE": {
+          "outcome": "not_evaluated"
+        },
+        "WN-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "malt-compliant",
+      "purpose": "Malt baseline: shared rules pass and MB-3 passes a present optional ABV statement.",
+      "application": {
+        "application_id": "malt-compliant",
+        "beverage_type": "malt_beverage",
+        "brand_name": "NORTHGATE",
+        "class_type": "India Pale Ale",
+        "abv_percent": 6.8,
+        "net_contents": "12 FL OZ",
+        "imported": false,
+        "image_filenames": [
+          "malt-compliant.png"
+        ]
+      },
+      "expected": {
+        "MB-SCOPE": {
+          "outcome": "not_evaluated"
+        },
+        "MB-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "malt-abv-mismatch",
+      "purpose": "Malt ABV beyond the +-0.3 pp consistency band: MB-3 must fail mismatch while shared rules pass.",
+      "application": {
+        "application_id": "malt-abv-mismatch",
+        "beverage_type": "malt_beverage",
+        "brand_name": "NORTHGATE",
+        "class_type": "Lager",
+        "abv_percent": 5.0,
+        "net_contents": "12 FL OZ",
+        "imported": false,
+        "image_filenames": [
+          "malt-abv-mismatch.png"
+        ]
+      },
+      "expected": {
+        "MB-3": {
+          "outcome": "fail",
+          "reason": "mismatch"
+        },
+        "MB-SCOPE": {
+          "outcome": "not_evaluated"
+        },
+        "MB-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "malt-abv-omitted",
+      "purpose": "Missing malt ABV routes to needs_review, not fail, because malt alcohol content is optional except for triggers outside this label-only review.",
+      "application": {
+        "application_id": "malt-abv-omitted",
+        "beverage_type": "malt_beverage",
+        "brand_name": "NORTHGATE",
+        "class_type": "Lager",
+        "abv_percent": 4.5,
+        "net_contents": "12 FL OZ",
+        "imported": false,
+        "image_filenames": [
+          "malt-abv-omitted.png"
+        ]
+      },
+      "expected": {
+        "MB-3": {
+          "outcome": "needs_review",
+          "reason": "missing"
+        },
+        "MB-SCOPE": {
+          "outcome": "not_evaluated"
+        },
+        "MB-7": {
+          "outcome": "not_applicable"
         }
       }
     }

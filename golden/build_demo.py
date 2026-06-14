@@ -5,9 +5,10 @@ asserts it hasn't).
 
 Outputs, committed under src/ttb_label_reviewer/static/demo/:
 
-- demo-batch.zip — a curated batch (contracts.md §2): nine reviewable
-  golden cases covering every verdict group plus two deliberately
-  broken rows, so one upload exercises the whole results UI
+- demo-batch.zip — a curated mixed-category batch (contracts.md §2):
+  distilled spirits, wine, and malt beverage golden cases covering
+  every verdict group plus deliberately broken rows, so one upload
+  exercises the whole results UI
 - the single-review sample images, copied from golden/
 - demo.json — the form values and what-to-expect copy the index page
   renders
@@ -28,10 +29,9 @@ GOLDEN_DIR = Path(__file__).parent
 DEMO_DIR = GOLDEN_DIR.parent / "src" / "ttb_label_reviewer" / "static" / "demo"
 
 # Reviewable rows: golden case ids, in manifest order below. Chosen to
-# light up every group on one upload — pass with visible evidence,
-# both marquee warning fails (title case, fetal harm), both judgment
-# routes (brand variance, ABV band), the banded fail, a multi-image
-# set, an imported case, and a degraded photo.
+# light up every group on one upload: distilled-spirits pass/fail/
+# needs-review coverage, multi-image/import/degraded rows, plus the
+# wine/malt demo cases from docs/wine-malt-research-memo.md §8.
 BATCH_CASE_IDS = [
     "compliant",
     "warning-title-case",
@@ -42,10 +42,24 @@ BATCH_CASE_IDS = [
     "warning-back-label",
     "imported-with-origin",
     "degraded",
+    "wine-compliant-table",
+    "wine-high-abv-missing-statement",
+    "malt-compliant",
+    "malt-abv-mismatch",
 ]
 
 # Broken rows (contracts.md §2): reported inline, never abort the batch.
 BROKEN_ROWS = [
+    {
+        "application_id": "demo-unsupported-cider",
+        "beverage_type": "cider",
+        "brand_name": "ORCHARD TEST",
+        "class_type": "Hard Cider",
+        "abv_percent": "6.0",
+        "net_contents": "12 FL OZ",
+        "imported": "false",
+        "image_filenames": "compliant.png",
+    },
     {
         "application_id": "demo-broken-image",
         "beverage_type": "distilled_spirits",
@@ -101,11 +115,12 @@ _WORST = {"fail": 0, "needs_review": 1, "pass": 2}
 
 def case_verdict(case: dict) -> str:
     """Worst expected outcome, fail > needs_review > pass;
-    not_applicable is excluded from aggregation (contracts.md §4)."""
+    not_applicable and not_evaluated are excluded from aggregation
+    (contracts.md §4)."""
     outcomes = [
         e["outcome"]
         for e in case["expected"].values()
-        if e["outcome"] != "not_applicable"
+        if e["outcome"] not in {"not_applicable", "not_evaluated"}
     ]
     return min(outcomes, key=_WORST.__getitem__, default="pass")
 
