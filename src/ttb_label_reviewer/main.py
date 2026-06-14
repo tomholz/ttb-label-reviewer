@@ -28,7 +28,13 @@ from pydantic import BaseModel
 from . import limits
 from .batch import TEMPLATE_CSV, BatchError, RowError, parse_batch_zip
 from .engine import ApplicationRecord, BeverageType, ReviewResult
-from .extraction import AnthropicExtractor, ExtractionError, Extractor, LabelImage
+from .extraction import (
+    AnthropicExtractor,
+    ExtractionError,
+    Extractor,
+    LabelImage,
+    extractor_from_env,
+)
 from .extraction.base import ALLOWED_MEDIA_TYPES
 from .jobs import BatchJob, JobRegistry, SSEEvent, run_batch
 from .pipeline import review_label_set
@@ -99,11 +105,17 @@ class LabelPreview(BaseModel):
 
 @lru_cache
 def _default_extractor() -> AnthropicExtractor:
-    return AnthropicExtractor()
+    # EXTRACTOR_BACKEND selects the Claude endpoint (D-10.1); default is
+    # the prototype's public Anthropic API.
+    return extractor_from_env()
 
 
 def get_extractor() -> Extractor:
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    # The default (prototype) backend needs ANTHROPIC_API_KEY; the Bedrock
+    # and Vertex backends authenticate via their cloud's ambient
+    # credentials, so the key check applies only to the anthropic backend.
+    backend = os.environ.get("EXTRACTOR_BACKEND", "anthropic")
+    if backend == "anthropic" and not os.environ.get("ANTHROPIC_API_KEY"):
         raise HTTPException(
             status_code=503,
             detail="Extraction is not configured: ANTHROPIC_API_KEY is not set.",

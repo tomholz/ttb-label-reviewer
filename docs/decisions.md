@@ -100,16 +100,36 @@ regardless.
 ## D-10 — Cloud model API for the prototype, with a concrete federal transition story
 
 The deliverable requires a deployed, publicly testable URL, so a cloud
-vision-model API is acceptable for the prototype. But the stakeholder
-constraints (firewall blocks outbound ML endpoints; FedRAMP'd Azure
-shop) get a designed-in transition story, not just a README mention.
-Three design rules, adopted from the first line of code:
+vision-model API is acceptable for the prototype. As built it calls a
+public endpoint and would not run unchanged on TTB's network — true of
+any cloud-API prototype, and stated plainly rather than hidden. The
+stakeholder constraints (firewall blocks outbound ML endpoints;
+FedRAMP'd Azure shop) get a designed-in transition story, not just a
+README mention. The design rules, adopted from the first line of code:
 
-1. **Model client is a swappable adapter.** One module owns the vision
-   API; Anthropic API for the prototype, FedRAMP-authorized endpoint
-   (Claude via AWS Bedrock GovCloud, or Azure OpenAI Government on
-   TTB's own substrate) for production — a config change plus one
-   adapter, not a rewrite.
+1. **Model client is a swappable adapter, and the SDK choice makes the
+   swap small.** One module (`extraction/anthropic_adapter.py`) owns the
+   vision client; everything else depends only on the `Extractor`
+   protocol. Because the prototype uses Claude through the Anthropic SDK,
+   the production move is the same SDK with a different client class, not
+   a fresh integration:
+   - FedRAMP-authorized SaaS via `anthropic.AnthropicBedrock` (Claude on
+     AWS Bedrock, GovCloud / FedRAMP High) or `anthropic.AnthropicVertex`
+     (GCP) — identical `messages.parse(...)` call and structured-output
+     contract; only client construction changes.
+   - An approved egress gateway via the client `base_url` / `HTTPS_PROXY`
+     where direct egress is blocked but an allowlisted proxy exists.
+   - An open-weights model inside TTB's boundary as the air-gapped
+     fallback, behind the same adapter.
+
+   The backend is config-selectable today: `EXTRACTOR_BACKEND`
+   (`anthropic` default / `bedrock` / `vertex`) picks the client class in
+   `extractor_from_env()`; `base_url` and proxy settings come from each
+   client's own environment. Bedrock/Vertex skip the `ANTHROPIC_API_KEY`
+   gate because they use cloud-ambient credentials. A fourth value,
+   `offline`, swaps in a no-network extractor (zero-confidence result,
+   everything routes to needs_review) that proves the app runs with zero
+   outbound dependency — the air-gapped boot proof, not a review mode.
 2. **Single OCI container.** Fly.io deploys from a Dockerfile, so the
    deployable artifact is already portable — the same image runs on
    Azure Government, GovCloud ECS, or on-prem. Fly hosts the prototype
@@ -120,6 +140,11 @@ Three design rules, adopted from the first line of code:
 4. **Stateless, ephemeral processing.** Uploads exist only for the
    duration of a review; nothing is retained. Keeps the PII /
    records-retention surface near zero for a future ATO conversation.
+5. **The golden-set eval is the model-portability qualification rig**
+   (ties to D-5 and D-6). Any substitute endpoint or model is qualified
+   by re-running the eval against the golden set and reading the measured
+   accuracy/latency, so a transition is "swap, re-run the goldens, read
+   the score," not "swap and hope."
 
 ## D-11 — Stack: Python end to end (FastAPI + HTMX), deployed on Fly.io
 

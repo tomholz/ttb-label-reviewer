@@ -91,24 +91,46 @@ treated as a first-class design constraint, not a footnote:
 ### Federal transition story (D-10)
 
 A public cloud API is acceptable for the prototype (the deliverable is
-a publicly testable URL), but the stakeholder constraints — a firewall
-that blocks outbound ML endpoints, a FedRAMP'd Azure shop — get a
-designed-in transition story:
+a publicly testable URL). As built, the app calls a public endpoint and
+would *not* run unchanged on TTB's network — that is by design, not an
+oversight. The stakeholder constraints (a firewall that blocks outbound
+ML endpoints, a FedRAMP'd Azure shop) get a concrete path to an
+in-boundary deployment, not a hand-wave:
 
-1. **The model client is a swappable adapter.** One module owns the
-   vision API: Anthropic for the prototype; a FedRAMP-authorized
-   endpoint (Claude via AWS Bedrock GovCloud, or an Azure Government
-   model on TTB's own substrate) in production. A config change plus
-   one adapter, not a rewrite.
+1. **The model endpoint is a swappable adapter, and the swap is small
+   because of the SDK choice.** One module
+   (`extraction/anthropic_adapter.py`) owns the vision client;
+   everything else depends only on the `Extractor` protocol
+   (`extraction/base.py`). Because the prototype uses Claude through the
+   Anthropic SDK, the production move is *the same SDK with a different
+   client class*, not a new integration to build and test from scratch:
+   - **FedRAMP-authorized SaaS** — `anthropic.AnthropicBedrock` reaches
+     Claude on AWS Bedrock (available in GovCloud, FedRAMP High);
+     `anthropic.AnthropicVertex` reaches it on GCP. Same
+     `messages.parse(...)` call, same structured-output contract; only
+     client construction changes.
+   - **Approved egress gateway** — where direct egress is blocked but an
+     allowlisted proxy exists, the client `base_url` (and the standard
+     `HTTPS_PROXY`) routes model traffic through it with no code change.
+   - **In-boundary fallback** — if even authorized SaaS is off the
+     table, an open-weights vision model running inside TTB's
+     accreditation boundary backs the same adapter unchanged.
 2. **Single OCI container.** The same image that deploys to Fly.io runs
    unchanged on Azure Government, GovCloud ECS, or on-prem. Fly hosts
    the prototype URL; it is not load-bearing.
 3. **All static assets vendored** — no CDN, no runtime outbound
-   dependency except the model API. Derived directly from the firewall
-   constraint that killed half the prior vendor's pilot.
+   dependency except the model endpoint. Derived directly from the
+   firewall constraint that killed half the prior vendor's pilot, and it
+   shrinks the swap above to a single endpoint to authorize.
 4. **Stateless, ephemeral processing.** Uploads exist only for the
    duration of a review; nothing is retained — near-zero PII and
    records-retention surface for a future ATO conversation.
+5. **The golden-set eval is the model-portability test rig.** Whichever
+   endpoint or model production lands on, re-running the eval
+   (`python -m ttb_label_reviewer.evaluation`) against the golden set
+   produces a measured accuracy/latency scoreboard row for the
+   substitute *before* anyone trusts it. The transition is "swap,
+   re-run the goldens, read the score," not "swap and hope."
 
 ## Eval scoreboard
 
@@ -229,6 +251,17 @@ Without a key the app still runs; a review attempt returns a clear
 `claude-opus-4-8` — an adapter parameter, tuned against the golden set
 (see the eval scoreboard above for the measured accuracy/latency
 trade-off and why the cheaper models were not adopted).
+
+`EXTRACTOR_BACKEND` selects the Claude endpoint (D-10.1): `anthropic`
+(default, the prototype's public API), `bedrock` (Claude on AWS Bedrock,
+GovCloud / FedRAMP High), or `vertex` (GCP). Bedrock and Vertex
+authenticate via their cloud's ambient credentials and read region /
+`base_url` / proxy settings from the environment, so the production move
+is one environment variable, not a code change. A fourth value,
+`offline`, makes **no** network call at all: it returns a zero-confidence
+result so every review routes to `needs_review`, which proves the app
+boots and serves the full pipeline with zero outbound dependency (the
+air-gapped case) — it does not read labels.
 
 ## Run
 

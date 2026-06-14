@@ -203,3 +203,15 @@ def test_unconfigured_api_key_is_503(monkeypatch):
     response = client.post("/api/review", data=FORM, files=[png_upload()])
     assert response.status_code == 503
     assert "ANTHROPIC_API_KEY" in response.json()["detail"]
+
+
+def test_non_anthropic_backend_skips_anthropic_key_check(monkeypatch):
+    # Bedrock/Vertex authenticate via their cloud's ambient credentials
+    # (D-10.1), so a missing ANTHROPIC_API_KEY must not block them.
+    import ttb_label_reviewer.main as main
+
+    monkeypatch.setenv("EXTRACTOR_BACKEND", "bedrock")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    sentinel = object()
+    monkeypatch.setattr(main, "_default_extractor", lambda: sentinel)
+    assert get_extractor() is sentinel

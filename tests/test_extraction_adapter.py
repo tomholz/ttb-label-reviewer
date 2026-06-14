@@ -8,15 +8,19 @@ import anthropic
 import httpx
 import pydantic
 import pytest
-from helpers import make_extraction
+from helpers import make_application, make_extraction
 
-from ttb_label_reviewer.engine import ExtractionResult
+import ttb_label_reviewer.extraction.anthropic_adapter as adapter
+from ttb_label_reviewer.engine import ExtractionResult, review
 from ttb_label_reviewer.extraction import (
     DEFAULT_MODEL,
     EXTRACTION_PROMPT,
     AnthropicExtractor,
     ExtractionError,
     LabelImage,
+    OfflineExtractor,
+    build_client,
+    extractor_from_env,
 )
 
 PNG = LabelImage(filename="front.png", media_type="image/png", data=b"png-bytes")
@@ -125,3 +129,62 @@ def test_authentication_error_gets_pointed_message():
     )
     with pytest.raises(ExtractionError, match="ANTHROPIC_API_KEY"):
         AnthropicExtractor(client=StubClient(error=error)).extract([PNG])
+
+
+# --- backend selection (D-10.1): config picks the Claude endpoint -----------
+# These stub the client classes so no credential-requiring SDK client is
+# ever constructed; they prove the dispatch, not the SDK.
+
+
+def test_registry_maps_each_backend_to_its_sdk_client():
+    assert adapter._CLIENTS["anthropic"] is anthropic.Anthropic
+    assert adapter._CLIENTS["bedrock"] is anthropic.AnthropicBedrock
+    assert adapter._CLIENTS["vertex"] is anthropic.AnthropicVertex
+
+
+def test_build_client_rejects_unknown_backend():
+    with pytest.raises(ValueError, match="Unknown EXTRACTOR_BACKEND"):
+        build_client("openai")
+
+
+def test_build_client_dispatches_by_backend(monkeypatch):
+    for backend in ("anthropic", "bedrock", "vertex"):
+        marker = object()
+        monkeypatch.setitem(adapter._CLIENTS, backend, lambda m=marker: m)
+        assert build_client(backend) is marker
+
+
+def test_extractor_from_env_defaults_to_anthropic(monkeypatch):
+    monkeypatch.delenv("EXTRACTOR_BACKEND", raising=False)
+    marker = object()
+    monkeypatch.setitem(adapter._CLIENTS, "anthropic", lambda: marker)
+    extractor = extractor_from_env()
+    assert isinstance(extractor, AnthropicExtractor)
+    assert extractor._client is marker
+    assert extractor.model == DEFAULT_MODEL
+
+
+def test_extractor_from_env_honors_backend(monkeypatch):
+    monkeypatch.setenv("EXTRACTOR_BACKEND", "vertex")
+    marker = object()
+    monkeypatch.setitem(adapter._CLIENTS, "vertex", lambda: marker)
+    assert extractor_from_env()._client is marker
+
+
+def test_extractor_from_env_offline_backend(monkeypatch):
+    monkeypatch.setenv("EXTRACTOR_BACKEND", "offline")
+    assert isinstance(extractor_from_env(), OfflineExtractor)
+
+
+def test_offline_extractor_makes_no_call_and_routes_to_needs_review():
+    # No network, no model: every field comes back at zero confidence, so
+    # the engine routes the whole review to needs_review — offline mode
+    # never fabricates a pass or fail.
+    result = OfflineExtractor().extract([PNG])
+    assert isinstance(result, ExtractionResult)
+    assert result.brand_name.confidence == 0.0
+    assert result.government_warning.confidence == 0.0
+    review_result = review(make_application(), result)
+    assert review_result.verdict.value == "needs_review"
+    assert review_result.counts.fail == 0
+    assert review_result.counts.pass_ == 0

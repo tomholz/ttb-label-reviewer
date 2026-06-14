@@ -8,13 +8,15 @@ rule engine (D-1).
 """
 
 import base64
+import os
 from collections.abc import Sequence
 
 import anthropic
 import pydantic
 
 from ..engine import ExtractionResult
-from .base import ExtractionError, LabelImage
+from .base import ExtractionError, Extractor, LabelImage
+from .offline import OfflineExtractor
 from .prompt import EXTRACTION_PROMPT
 
 # Overridable per instance; recorded in the eval scoreboard (D-5), so a
@@ -24,6 +26,24 @@ DEFAULT_MODEL = "claude-opus-4-8"
 # The §3 result is a few hundred tokens; headroom for a long warning
 # transcription without inviting runaway output.
 _MAX_OUTPUT_TOKENS = 2048
+
+# All three backends are Claude through the Anthropic SDK (D-10.1): the
+# same messages.parse call and the same structured-output contract,
+# differing only in how the client authenticates and which endpoint it
+# reaches. `anthropic` is the prototype's public API; `bedrock` is Claude
+# on AWS Bedrock (GovCloud / FedRAMP High); `vertex` is Claude on GCP.
+# Each client reads its own credentials, region, base_url, and proxy
+# settings from the environment, so production selects a backend by
+# config alone — the seam the federal transition story turns on.
+VisionClient = (
+    anthropic.Anthropic | anthropic.AnthropicBedrock | anthropic.AnthropicVertex
+)
+
+_CLIENTS: dict[str, type] = {
+    "anthropic": anthropic.Anthropic,
+    "bedrock": anthropic.AnthropicBedrock,
+    "vertex": anthropic.AnthropicVertex,
+}
 
 
 class AnthropicExtractor:
@@ -37,7 +57,7 @@ class AnthropicExtractor:
     def __init__(
         self,
         model: str = DEFAULT_MODEL,
-        client: anthropic.Anthropic | None = None,
+        client: VisionClient | None = None,
     ) -> None:
         self.model = model
         self._client = client or anthropic.Anthropic()
@@ -101,3 +121,35 @@ class AnthropicExtractor:
                 "try again or review this label manually."
             )
         return response.parsed_output
+
+
+def build_client(backend: str) -> VisionClient:
+    """Construct the SDK client for the chosen backend (D-10.1).
+
+    Raises ValueError on an unknown backend name — an operator
+    misconfiguration, surfaced clearly rather than as an opaque failure.
+    """
+    try:
+        client_cls = _CLIENTS[backend]
+    except KeyError:
+        raise ValueError(
+            f"Unknown EXTRACTOR_BACKEND {backend!r}; expected one of "
+            f"{', '.join(sorted(_CLIENTS))}."
+        ) from None
+    return client_cls()
+
+
+def extractor_from_env() -> Extractor:
+    """Build the default extractor from environment config (D-10.1).
+
+    EXTRACTOR_BACKEND selects the Claude endpoint (default `anthropic`);
+    `anthropic`/`bedrock`/`vertex` share the same adapter, prompt, and
+    contract. `offline` is the no-network backend (no model call), for
+    proving zero-outbound boot. This is the seam the federal transition
+    story turns on: a production deployment changes one environment
+    variable, not the code.
+    """
+    backend = os.environ.get("EXTRACTOR_BACKEND", "anthropic")
+    if backend == "offline":
+        return OfflineExtractor()
+    return AnthropicExtractor(client=build_client(backend))
