@@ -459,12 +459,40 @@ a:hover { color: var(--accent); }
 .demo-card h3 { font-family: var(--serif); font-size: 1.08rem; margin: 1.25rem 0 0.3rem; }
 .demo-hint { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.5rem; }
 
-.demo-samples { list-style: none; padding: 0; margin: 0; }
-.demo-samples li {
+.demo-sections {
+  display: grid;
+  gap: 0.55rem;
+}
+.demo-section {
   border: 1px solid var(--line);
   border-radius: 8px;
+  overflow: hidden;
+}
+.demo-section summary {
+  align-items: center;
+  background: var(--bg);
+  cursor: pointer;
+  display: flex;
+  font-weight: 700;
+  gap: 0.8rem;
+  justify-content: space-between;
+  min-height: 3rem;
+  padding: 0.65rem 0.9rem;
+}
+.demo-section summary:focus-visible {
+  outline: 3px solid var(--accent-bright);
+  outline-offset: -3px;
+}
+.demo-section-count {
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.demo-samples { list-style: none; padding: 0; margin: 0; }
+.demo-samples li {
+  border-top: 1px solid var(--line);
   padding: 0.6rem 0.9rem;
-  margin: 0.45rem 0;
 }
 .demo-run {
   appearance: none;

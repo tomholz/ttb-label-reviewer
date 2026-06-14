@@ -340,10 +340,7 @@ def ui_sample_review(
 ) -> HTMLResponse:
     """One-click demo review: whitelist the committed demo filename,
     read the bundled image, and render the normal single-review result."""
-    demo_sample = next(
-        (entry for entry in _demo_data()["singles"] if entry["filename"] == sample),
-        None,
-    )
+    demo_sample = _demo_sample(sample)
     if demo_sample is None:
         raise HTTPException(status_code=404, detail="Sample not found.")
 
@@ -484,6 +481,13 @@ def _demo_data() -> dict:
     generated from the golden set by golden/build_demo.py (committed,
     drift-tested) — never typed by hand."""
     return json.loads((_PACKAGE_DIR / "static" / "demo" / "demo.json").read_text())
+
+
+def _demo_sample(filename: str) -> dict | None:
+    for entry in _demo_data()["singles"]:
+        if entry["filename"] == filename:
+            return entry
+    return None
 
 
 @app.get("/", response_class=HTMLResponse)

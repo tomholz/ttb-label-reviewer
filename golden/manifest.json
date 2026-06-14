@@ -1,5 +1,5 @@
 {
-  "version": "3",
+  "version": "4",
   "cases": [
     {
       "case_id": "compliant",
@@ -489,6 +489,34 @@
         "WN-3": {
           "outcome": "fail",
           "reason": "missing"
+        },
+        "WN-SCOPE": {
+          "outcome": "not_evaluated"
+        },
+        "WN-7": {
+          "outcome": "not_applicable"
+        }
+      }
+    },
+    {
+      "case_id": "wine-abv-mismatch",
+      "purpose": "Wine alcohol statement is outside the 1.5 pp tolerance for wines at or below 14% ABV: WN-3 must fail mismatch while shared rules pass.",
+      "application": {
+        "application_id": "wine-abv-mismatch",
+        "beverage_type": "wine",
+        "brand_name": "VALLEY CREST",
+        "class_type": "California Red Wine",
+        "abv_percent": 13.0,
+        "net_contents": "750 mL",
+        "imported": false,
+        "image_filenames": [
+          "wine-abv-mismatch.png"
+        ]
+      },
+      "expected": {
+        "WN-3": {
+          "outcome": "fail",
+          "reason": "mismatch"
         },
         "WN-SCOPE": {
           "outcome": "not_evaluated"

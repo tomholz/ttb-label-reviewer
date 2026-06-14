@@ -584,6 +584,37 @@
       "confidence": 0.93
     }
   },
+  "wine-abv-mismatch": {
+    "brand_name": {
+      "raw": "VALLEY CREST",
+      "confidence": 0.97
+    },
+    "class_type": {
+      "raw": "California Red Wine",
+      "confidence": 0.97
+    },
+    "alcohol_content": {
+      "raw": "14.6% alcohol by volume",
+      "confidence": 0.97
+    },
+    "proof": null,
+    "net_contents": {
+      "raw": "750 mL",
+      "confidence": 0.97
+    },
+    "name_address": {
+      "raw": "Produced and bottled by Valley Crest Winery, Sonoma, CA",
+      "confidence": 0.97
+    },
+    "country_of_origin": null,
+    "government_warning": {
+      "raw_text": "GOVERNMENT WARNING: (1) According to the Surgeon\nGeneral, women should not drink alcoholic beverages\nduring pregnancy because of the risk of birth defects. (2)\nConsumption of alcoholic beverages impairs your ability to\ndrive a car or operate machinery, and may cause health\nproblems.",
+      "lead_in_bold": "yes",
+      "remainder_bold": "no",
+      "separate_and_apart": "yes",
+      "confidence": 0.93
+    }
+  },
   "malt-compliant": {
     "brand_name": {
       "raw": "NORTHGATE",

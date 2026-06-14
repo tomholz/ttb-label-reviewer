@@ -92,6 +92,18 @@ def test_advertised_counts_follow_from_golden_expectations(
 
 
 def test_single_samples_match_the_golden_set(demo, golden_cases):
+    assert [section["title"] for section in demo["single_sections"]] == [
+        "Distilled spirits",
+        "Wine",
+        "Malt beverages",
+    ]
+    assert all(len(section["samples"]) == 3 for section in demo["single_sections"])
+    assert demo["singles"] == [
+        sample
+        for section in demo["single_sections"]
+        for sample in section["samples"]
+    ]
+
     by_filename: dict[str, list[dict]] = {}
     for case in golden_cases.values():
         if len(case["application"]["image_filenames"]) != 1:
@@ -99,7 +111,7 @@ def test_single_samples_match_the_golden_set(demo, golden_cases):
         by_filename.setdefault(case["application"]["image_filenames"][0], []).append(
             case["application"]
         )
-    assert len(demo["singles"]) >= 2
+    assert len(demo["singles"]) == 9
     for sample in demo["singles"]:
         candidates = by_filename[sample["filename"]]
         assert any(
@@ -125,6 +137,11 @@ def test_index_offers_the_sample_data(demo):
     page = client.get("/").text
     assert "Try it with sample data" in page
     assert 'href="/static/demo/demo-batch.zip"' in page
+    assert page.count('class="demo-section"') == 3
+    assert "Distilled spirits" in page
+    assert "Wine" in page
+    assert "Malt beverages" in page
+    assert page.count("3 samples") == 3
     for sample in demo["singles"]:
         assert f'href="/static/demo/{sample["filename"]}"' in page
         assert 'hx-post="/review/sample"' in page

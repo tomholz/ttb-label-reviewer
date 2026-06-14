@@ -72,6 +72,7 @@ def test_wine_malt_golden_cases_present():
     for case_id in (
         "wine-compliant-table",
         "wine-high-abv-missing-statement",
+        "wine-abv-mismatch",
         "malt-compliant",
         "malt-abv-mismatch",
         "malt-abv-omitted",

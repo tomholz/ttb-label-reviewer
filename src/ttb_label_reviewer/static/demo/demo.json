@@ -1,5 +1,106 @@
 {
-  "golden_manifest_version": "3",
+  "golden_manifest_version": "4",
+  "single_sections": [
+    {
+      "id": "distilled-spirits",
+      "title": "Distilled spirits",
+      "samples": [
+        {
+          "filename": "compliant.png",
+          "beverage_type": "distilled_spirits",
+          "brand_name": "OLD TOM RESERVE",
+          "class_type": "Kentucky Straight Bourbon Whiskey",
+          "abv_percent": 45.0,
+          "net_contents": "750 mL",
+          "note": "passes every check, evidence shown on each"
+        },
+        {
+          "filename": "warning-title-case.png",
+          "beverage_type": "distilled_spirits",
+          "brand_name": "OLD TOM RESERVE",
+          "class_type": "Kentucky Straight Bourbon Whiskey",
+          "abv_percent": 45.0,
+          "net_contents": "750 mL",
+          "note": "fails the capitalization check \u2014 \"Government Warning\" in title case, the classic catch"
+        },
+        {
+          "filename": "warning-fetal-harm.png",
+          "beverage_type": "distilled_spirits",
+          "brand_name": "OLD TOM RESERVE",
+          "class_type": "Kentucky Straight Bourbon Whiskey",
+          "abv_percent": 45.0,
+          "net_contents": "750 mL",
+          "note": "fails the warning text check with a character-level diff (\"birth defects\" reads \"fetal harm\")"
+        }
+      ]
+    },
+    {
+      "id": "wine",
+      "title": "Wine",
+      "samples": [
+        {
+          "filename": "wine-compliant-table.png",
+          "beverage_type": "wine",
+          "brand_name": "VALLEY CREST",
+          "class_type": "California Table Wine",
+          "abv_percent": 12.5,
+          "net_contents": "750 mL",
+          "note": "passes checked rules; table wine may omit the alcohol statement"
+        },
+        {
+          "filename": "wine-high-abv-missing-statement.png",
+          "beverage_type": "wine",
+          "brand_name": "VALLEY CREST",
+          "class_type": "Napa Valley Cabernet Sauvignon",
+          "abv_percent": 15.5,
+          "net_contents": "750 mL",
+          "note": "fails because wine above 14% ABV must state alcohol content"
+        },
+        {
+          "filename": "wine-abv-mismatch.png",
+          "beverage_type": "wine",
+          "brand_name": "VALLEY CREST",
+          "class_type": "California Red Wine",
+          "abv_percent": 13.0,
+          "net_contents": "750 mL",
+          "note": "fails because the label alcohol statement is outside the wine tolerance"
+        }
+      ]
+    },
+    {
+      "id": "malt-beverages",
+      "title": "Malt beverages",
+      "samples": [
+        {
+          "filename": "malt-compliant.png",
+          "beverage_type": "malt_beverage",
+          "brand_name": "NORTHGATE",
+          "class_type": "India Pale Ale",
+          "abv_percent": 6.8,
+          "net_contents": "12 FL OZ",
+          "note": "passes checked rules with a matching ABV statement"
+        },
+        {
+          "filename": "malt-abv-mismatch.png",
+          "beverage_type": "malt_beverage",
+          "brand_name": "NORTHGATE",
+          "class_type": "Lager",
+          "abv_percent": 5.0,
+          "net_contents": "12 FL OZ",
+          "note": "fails because the label ABV does not match the application"
+        },
+        {
+          "filename": "malt-abv-omitted.png",
+          "beverage_type": "malt_beverage",
+          "brand_name": "NORTHGATE",
+          "class_type": "Lager",
+          "abv_percent": 4.5,
+          "net_contents": "12 FL OZ",
+          "note": "routes to review because malt alcohol content can be conditional"
+        }
+      ]
+    }
+  ],
   "singles": [
     {
       "filename": "compliant.png",
@@ -27,6 +128,60 @@
       "abv_percent": 45.0,
       "net_contents": "750 mL",
       "note": "fails the warning text check with a character-level diff (\"birth defects\" reads \"fetal harm\")"
+    },
+    {
+      "filename": "wine-compliant-table.png",
+      "beverage_type": "wine",
+      "brand_name": "VALLEY CREST",
+      "class_type": "California Table Wine",
+      "abv_percent": 12.5,
+      "net_contents": "750 mL",
+      "note": "passes checked rules; table wine may omit the alcohol statement"
+    },
+    {
+      "filename": "wine-high-abv-missing-statement.png",
+      "beverage_type": "wine",
+      "brand_name": "VALLEY CREST",
+      "class_type": "Napa Valley Cabernet Sauvignon",
+      "abv_percent": 15.5,
+      "net_contents": "750 mL",
+      "note": "fails because wine above 14% ABV must state alcohol content"
+    },
+    {
+      "filename": "wine-abv-mismatch.png",
+      "beverage_type": "wine",
+      "brand_name": "VALLEY CREST",
+      "class_type": "California Red Wine",
+      "abv_percent": 13.0,
+      "net_contents": "750 mL",
+      "note": "fails because the label alcohol statement is outside the wine tolerance"
+    },
+    {
+      "filename": "malt-compliant.png",
+      "beverage_type": "malt_beverage",
+      "brand_name": "NORTHGATE",
+      "class_type": "India Pale Ale",
+      "abv_percent": 6.8,
+      "net_contents": "12 FL OZ",
+      "note": "passes checked rules with a matching ABV statement"
+    },
+    {
+      "filename": "malt-abv-mismatch.png",
+      "beverage_type": "malt_beverage",
+      "brand_name": "NORTHGATE",
+      "class_type": "Lager",
+      "abv_percent": 5.0,
+      "net_contents": "12 FL OZ",
+      "note": "fails because the label ABV does not match the application"
+    },
+    {
+      "filename": "malt-abv-omitted.png",
+      "beverage_type": "malt_beverage",
+      "brand_name": "NORTHGATE",
+      "class_type": "Lager",
+      "abv_percent": 4.5,
+      "net_contents": "12 FL OZ",
+      "note": "routes to review because malt alcohol content can be conditional"
     }
   ],
   "batch": {

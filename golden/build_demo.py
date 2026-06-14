@@ -82,18 +82,53 @@ BROKEN_ROWS = [
     },
 ]
 
-# Single-review samples: case id -> what the reviewer should see.
-SINGLE_SAMPLES = {
-    "compliant": "passes every check, evidence shown on each",
-    "warning-title-case": (
-        'fails the capitalization check — "Government Warning" in title '
-        "case, the classic catch"
-    ),
-    "warning-fetal-harm": (
-        "fails the warning text check with a character-level diff "
-        '("birth defects" reads "fetal harm")'
-    ),
-}
+# Single-review samples grouped the way the index page presents them.
+SINGLE_SAMPLE_SECTIONS = [
+    {
+        "id": "distilled-spirits",
+        "title": "Distilled spirits",
+        "samples": {
+            "compliant": "passes every check, evidence shown on each",
+            "warning-title-case": (
+                'fails the capitalization check — "Government Warning" in title '
+                "case, the classic catch"
+            ),
+            "warning-fetal-harm": (
+                "fails the warning text check with a character-level diff "
+                '("birth defects" reads "fetal harm")'
+            ),
+        },
+    },
+    {
+        "id": "wine",
+        "title": "Wine",
+        "samples": {
+            "wine-compliant-table": (
+                "passes checked rules; table wine may omit the alcohol statement"
+            ),
+            "wine-high-abv-missing-statement": (
+                "fails because wine above 14% ABV must state alcohol content"
+            ),
+            "wine-abv-mismatch": (
+                "fails because the label alcohol statement is outside the wine "
+                "tolerance"
+            ),
+        },
+    },
+    {
+        "id": "malt-beverages",
+        "title": "Malt beverages",
+        "samples": {
+            "malt-compliant": "passes checked rules with a matching ABV statement",
+            "malt-abv-mismatch": (
+                "fails because the label ABV does not match the application"
+            ),
+            "malt-abv-omitted": (
+                "routes to review because malt alcohol content can be conditional"
+            ),
+        },
+    },
+]
 
 MANIFEST_COLUMNS = [
     "application_id",
@@ -166,25 +201,33 @@ def main() -> None:
         counts[case_verdict(case)] += 1
     counts["error"] = len(BROKEN_ROWS)
 
-    singles = []
-    for case_id, note in SINGLE_SAMPLES.items():
+    def sample_entry(case_id: str, note: str) -> dict:
         application = cases[case_id]["application"]
         (filename,) = application["image_filenames"]
         shutil.copyfile(GOLDEN_DIR / filename, DEMO_DIR / filename)
-        singles.append(
-            {
-                "filename": filename,
-                "beverage_type": application["beverage_type"],
-                "brand_name": application["brand_name"],
-                "class_type": application["class_type"],
-                "abv_percent": application["abv_percent"],
-                "net_contents": application["net_contents"],
-                "note": note,
-            }
-        )
+        return {
+            "filename": filename,
+            "beverage_type": application["beverage_type"],
+            "brand_name": application["brand_name"],
+            "class_type": application["class_type"],
+            "abv_percent": application["abv_percent"],
+            "net_contents": application["net_contents"],
+            "note": note,
+        }
+
+    single_sections = []
+    singles = []
+    for section in SINGLE_SAMPLE_SECTIONS:
+        samples = [
+            sample_entry(case_id, note)
+            for case_id, note in section["samples"].items()
+        ]
+        singles.extend(samples)
+        single_sections.append({**section, "samples": samples})
 
     demo = {
         "golden_manifest_version": manifest["version"],
+        "single_sections": single_sections,
         "singles": singles,
         "batch": {"rows": len(rows), "expected": counts},
     }

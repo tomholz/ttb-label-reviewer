@@ -148,26 +148,36 @@
       <p class="card-intro">Run a real review immediately, or download an
          image from the project's golden test set and inspect the values
          yourself.</p>
-      <ul class="demo-samples">
-        {% for s in demo.singles %}
-        <li>
-          <button type="button"
-                  class="demo-run"
-                  hx-post="/review/sample"
-                  hx-vals='{"sample": "{{ s.filename }}"}'
-                  hx-target="#results"
-                  hx-swap="innerHTML"
-                  hx-indicator="#indicator"
-                  hx-disabled-elt="this">Run this sample &#9656;</button>
-          <a href="/static/demo/{{ s.filename }}" download>{{ s.filename }}</a>
-          &mdash; {{ s.note }}.
-          <span class="demo-values">Brand <code>{{ s.brand_name }}</code> &middot;
-            Class/type <code>{{ s.class_type }}</code> &middot;
-            ABV <code>{{ s.abv_percent }}</code> &middot;
-            Net contents <code>{{ s.net_contents }}</code></span>
-        </li>
+      <div class="demo-sections">
+        {% for section in demo.single_sections %}
+        <details class="demo-section">
+          <summary>
+            <span>{{ section.title }}</span>
+            <span class="demo-section-count">{{ section.samples|length }} samples</span>
+          </summary>
+          <ul class="demo-samples">
+            {% for s in section.samples %}
+            <li>
+              <button type="button"
+                      class="demo-run"
+                      hx-post="/review/sample"
+                      hx-vals='{"sample": "{{ s.filename }}"}'
+                      hx-target="#results"
+                      hx-swap="innerHTML"
+                      hx-indicator="#indicator"
+                      hx-disabled-elt="this">Run this sample &#9656;</button>
+              <a href="/static/demo/{{ s.filename }}" download>{{ s.filename }}</a>
+              &mdash; {{ s.note }}.
+              <span class="demo-values">Brand <code>{{ s.brand_name }}</code> &middot;
+                Class/type <code>{{ s.class_type }}</code> &middot;
+                ABV <code>{{ s.abv_percent }}</code> &middot;
+                Net contents <code>{{ s.net_contents }}</code></span>
+            </li>
+            {% endfor %}
+          </ul>
+        </details>
         {% endfor %}
-      </ul>
+      </div>
     </section>
   </section>
 </div>

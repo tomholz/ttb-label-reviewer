@@ -89,6 +89,10 @@ def test_index_serves_the_form():
     assert "scrollIntoView({ block: 'start' })" in page
     assert 'hx-post="/review/sample"' in page
     assert "Run this sample" in page
+    assert "<details" in page
+    assert "Distilled spirits" in page
+    assert "Wine" in page
+    assert "Malt beverages" in page
     assert "Try the batch sample" in page
 
 

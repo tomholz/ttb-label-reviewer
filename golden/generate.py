@@ -36,7 +36,7 @@ from ttb_label_reviewer.engine.canonical import CANONICAL_WARNING
 from ttb_label_reviewer.engine.normalize import normalize_warning
 
 OUT_DIR = Path(__file__).parent
-MANIFEST_VERSION = "3"
+MANIFEST_VERSION = "4"
 
 FONT_DIR = "/System/Library/Fonts/Supplemental"
 ARIAL = f"{FONT_DIR}/Arial.ttf"
@@ -440,6 +440,34 @@ CASES = [
             "imported": False,
         },
         "expected": {"WN-3": {"outcome": "fail", "reason": "missing"}},
+    },
+    {
+        "case_id": "wine-abv-mismatch",
+        "purpose": (
+            "Wine alcohol statement is outside the 1.5 pp tolerance for wines "
+            "at or below 14% ABV: WN-3 must fail mismatch while shared rules pass."
+        ),
+        "labels": [
+            {
+                **BASE,
+                "brand": "VALLEY CREST",
+                "class_type": "California Red Wine",
+                "abv": "14.6% alcohol by volume",
+                "proof": None,
+                "net": "750 mL",
+                "address": "Produced and bottled by Valley Crest Winery, Sonoma, CA",
+                "warn": CANONICAL_WARN,
+            }
+        ],
+        "application": {
+            "beverage_type": "wine",
+            "brand_name": "VALLEY CREST",
+            "class_type": "California Red Wine",
+            "abv_percent": 13.0,
+            "net_contents": "750 mL",
+            "imported": False,
+        },
+        "expected": {"WN-3": {"outcome": "fail", "reason": "mismatch"}},
     },
     {
         "case_id": "malt-compliant",
