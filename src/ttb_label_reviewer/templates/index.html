@@ -142,7 +142,7 @@
     </section>
 
     <section id="results" aria-live="polite"
-             hx-on::htmx:after-settle="const result = this.firstElementChild; if (result) { result.scrollIntoView({ block: 'start' }); result.focus(); }"></section>
+             hx-on:htmx:after-settle="const result = this.firstElementChild; if (result) { result.scrollIntoView({ block: 'start' }); result.focus(); }"></section>
 
     <section class="card demo-card">
       <h2>Try it with sample data</h2>

@@ -83,7 +83,7 @@ def test_index_serves_the_form():
     # The upload limits enforced in main.py are stated in the form hint.
     assert "Up to 8 images" in page
     assert 'id="results"' in page
-    assert "hx-on::htmx:after-settle" in page
+    assert "hx-on:htmx:after-settle" in page
     assert "firstElementChild" in page
     assert "scrollIntoView({ block: 'start' })" in page
     assert 'hx-post="/review/sample"' in page
