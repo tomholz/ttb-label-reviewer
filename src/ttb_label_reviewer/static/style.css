@@ -138,6 +138,10 @@ body:has(#batch-workflow:target) .workflow-tab-batch {
 }
 
 .workflow-panel { display: none; }
+/* A tab is an in-page anchor (:target). Without this, jumping to a panel
+   scrolls it flush to the viewport top and pushes the tab strip out of
+   view; the margin keeps the tabs visible after the jump. */
+.workflow-panel { scroll-margin-top: 6rem; }
 #single-workflow { display: block; }
 #batch-workflow:target { display: block; }
 #batch-workflow:target + #single-workflow { display: none; }
@@ -513,4 +517,6 @@ a:hover { color: var(--accent); }
 
 @media (max-width: 34rem) {
   .workflow-tabs { grid-template-columns: 1fr; }
+  /* The stacked two-row tab strip is taller, so clear more space. */
+  .workflow-panel { scroll-margin-top: 9rem; }
 }
