@@ -219,8 +219,7 @@ def main() -> None:
     singles = []
     for section in SINGLE_SAMPLE_SECTIONS:
         samples = [
-            sample_entry(case_id, note)
-            for case_id, note in section["samples"].items()
+            sample_entry(case_id, note) for case_id, note in section["samples"].items()
         ]
         singles.extend(samples)
         single_sections.append({**section, "samples": samples})

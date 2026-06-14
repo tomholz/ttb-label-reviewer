@@ -99,9 +99,7 @@ def test_single_samples_match_the_golden_set(demo, golden_cases):
     ]
     assert all(len(section["samples"]) == 3 for section in demo["single_sections"])
     assert demo["singles"] == [
-        sample
-        for section in demo["single_sections"]
-        for sample in section["samples"]
+        sample for section in demo["single_sections"] for sample in section["samples"]
     ]
 
     by_filename: dict[str, list[dict]] = {}
