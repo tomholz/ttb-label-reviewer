@@ -183,6 +183,12 @@ a:hover { color: var(--accent); }
 
 /* --- Results --- */
 
+.results-card:focus,
+.error-card:focus {
+  outline: 3px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+
 .result-meta {
   display: flex;
   justify-content: flex-start;

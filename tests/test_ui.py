@@ -74,6 +74,10 @@ def test_index_serves_the_form():
     assert "http://" not in page and "https://" not in page
     # The upload limits enforced in main.py are stated in the form hint.
     assert "Up to 8 images" in page
+    assert 'id="results"' in page
+    assert "hx-on::htmx:after-settle" in page
+    assert "firstElementChild" in page
+    assert "scrollIntoView({ block: 'start' })" in page
 
 
 def test_vendored_assets_are_served():
@@ -105,6 +109,8 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
     )
     assert response.status_code == 200
     page = response.text
+    assert 'class="card results-card" tabindex="-1"' in page
+    assert '<h2 id="review-result-heading">Review result</h2>' in page
     assert "verdict-pass" in page
     assert "Distilled spirits coverage" in page
     # Counts line: 12 checks, 10 evaluated, DS-7 n/a, DS-SCOPE not evaluated.
@@ -224,6 +230,7 @@ def test_extraction_error_is_visible_fragment(fake_extractor):
         "/review", data=FORM, files=[png_upload()], headers=HTMX_HEADERS
     )
     assert response.status_code == 502
+    assert 'class="card error-card" role="alert" tabindex="-1"' in response.text
     assert "Review could not be completed" in response.text
     assert "the model had a bad day" in response.text
 
