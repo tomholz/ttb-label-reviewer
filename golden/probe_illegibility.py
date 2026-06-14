@@ -21,8 +21,7 @@ Run it on two cases for the full picture:
   the deviation (reading) or reverts to canonical (autocomplete) — and
   we see what confidence it reports when it does.
 
-The threshold decision is documented in the README's eval-scoreboard
-section.
+The threshold decision is documented in docs/evaluation.md.
 
 Run:  uv run --env-file .env python golden/probe_illegibility.py \\
           [--model M] [--case CASE_ID]

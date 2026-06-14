@@ -130,5 +130,5 @@ class EngineConfig(BaseModel):
     # below 0.60 even while hallucinating). All golden-set fields score
     # >= 0.95, so this raise costs no false reviews there. Caveat: measured
     # on one synthetic label family; confidence is NOT a reliable
-    # hallucination detector in general (see README, eval scoreboard).
+    # hallucination detector in general (see docs/evaluation.md).
     illegibility_threshold: float = 0.9
