@@ -106,6 +106,7 @@ def test_review_renders_verdict_counts_and_evidence(fake_extractor):
     assert response.status_code == 200
     page = response.text
     assert "verdict-pass" in page
+    assert "Distilled spirits coverage" in page
     # Counts line: 12 checks, 10 evaluated, DS-7 n/a, DS-SCOPE not evaluated.
     assert "12 checks: 10 evaluated" in page
     assert "1 not applicable" in page

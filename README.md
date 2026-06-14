@@ -133,6 +133,11 @@ blocking CI gate (D-5).
 | 2026-06-11 | claude-haiku-4-5-20251001 | `6886dc45365a` | v1 `464fabaa2311` | 148/176 (84.1%) | 11/16 | 4.2 s |
 | 2026-06-13 | claude-opus-4-8 | `6886dc45365a` | v3 `2176b10ba2e4` | 247/247 (100.0%) | 21/21 | 11.0 s |
 
+Latency note: the 2026-06-13 Opus row includes a cold structured-output
+schema compile across the initial worker wave. Warmed cases completed in
+roughly 4-5 seconds, which is the number relevant to the D-3 single-label
+use case; the table keeps the cold run visible rather than hiding it.
+
 - Current golden manifest v3 `2176b10ba2e4` adds one scope-marker
   `not_evaluated` row to each review and expands the live rendered set with
   wine and malt beverage cases. The 2026-06-13 Opus run scored all five
@@ -154,9 +159,7 @@ blocking CI gate (D-5).
 - Opus and Sonnet transcribed **every fidelity probe faithfully**,
   including the title-case lead-in — the case the model's prior most
   wants to "correct".
-- Historical latencies are warm. The 2026-06-13 row includes a cold
-  structured-output schema compile across the initial worker wave; warmed
-  cases completed in roughly 4-5 s.
+- Historical rows before 2026-06-13 are warm runs.
 - Per-run detail (including per-field confidences) lands in
   `golden/results/` (gitignored); this table is the committed artifact.
 
@@ -246,6 +249,19 @@ curl -s http://127.0.0.1:8000/api/review \
   -F net_contents='750 mL' \
   -F images=@spikes/label-renderer/out/label_a_compliant.png
 ```
+
+## Deploy Smoke Check
+
+After deploying, verify the public app is reachable and current:
+
+```sh
+curl -s https://ttb-label-reviewer.fly.dev/healthz
+```
+
+The response should include `{"status":"ok", ...}` plus version/revision
+metadata. The homepage should show a beverage-type selector with
+Distilled spirits, Wine, and Malt beverage options; if it says distilled
+spirits only, Fly is still serving an old image.
 
 ### Batch review
 

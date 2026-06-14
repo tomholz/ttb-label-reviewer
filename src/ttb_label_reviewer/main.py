@@ -3,6 +3,7 @@ import json
 import os
 import uuid
 from functools import lru_cache
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Annotated
 
@@ -49,6 +50,36 @@ templates.env.globals["PARTIAL_VERDICT_LABELS"] = {
     "needs_review": "Needs agent review",
     "fail": "Issue found",
 }
+templates.env.globals["COVERAGE_LABELS"] = {
+    "full": "Distilled spirits coverage",
+    "partial": "Partial coverage",
+}
+
+
+def _short_revision(raw: str | None) -> str:
+    if not raw:
+        return "local"
+    # Fly/GitHub values may be full image refs or 40-char SHAs; a short
+    # marker is enough to tell whether the deployed app is stale.
+    return raw.rsplit(":", 1)[-1][:12]
+
+
+try:
+    _APP_VERSION = version("ttb-label-reviewer")
+except PackageNotFoundError:
+    _APP_VERSION = "0.1.0"
+
+_BUILD_INFO = {
+    "version": _APP_VERSION,
+    "revision": _short_revision(
+        os.environ.get("APP_REVISION")
+        or os.environ.get("GITHUB_SHA")
+        or os.environ.get("SOURCE_VERSION")
+        or os.environ.get("FLY_IMAGE_REF")
+    ),
+}
+templates.env.globals["BUILD_INFO"] = _BUILD_INFO
+
 # Human-facing commodity label for the partial-coverage banner. Presentation
 # only — kept out of the engine's BeverageType (a UI concern, not a rule one).
 _BEVERAGE_LABELS = {
@@ -175,7 +206,7 @@ def _run_single_review(
 
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", **_BUILD_INFO}
 
 
 @app.get("/favicon.ico", include_in_schema=False)

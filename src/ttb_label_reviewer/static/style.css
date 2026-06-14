@@ -42,6 +42,7 @@ main, .site-header, .site-footer {
   padding-top: 1rem;
   padding-bottom: 2.5rem;
 }
+.build-marker { font-size: 0.78rem; margin-top: -0.35rem; }
 
 .card {
   background: var(--card);

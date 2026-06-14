@@ -5,7 +5,7 @@
 <div class="card results-card">
   <div class="result-meta">
     <span class="coverage-badge coverage-{{ result.coverage }}">
-      {{ "Full coverage" if result.coverage == "full" else "Partial coverage" }}
+      {{ COVERAGE_LABELS[result.coverage] }}
     </span>
   </div>
   <div class="verdict verdict-{{ result.verdict }}">

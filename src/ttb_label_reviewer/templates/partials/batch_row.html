@@ -7,7 +7,7 @@
   <summary>
     <span class="badge badge-{{ result.verdict }}">{{ display_labels[result.verdict] }}</span>
     <span class="coverage-badge coverage-{{ result.coverage }}">
-      {{ "Full coverage" if result.coverage == "full" else "Partial coverage" }}
+      {{ COVERAGE_LABELS[result.coverage] }}
     </span>
     <span class="batch-app-id">{{ result.application_id }}</span>
     <span class="batch-row-counts">
